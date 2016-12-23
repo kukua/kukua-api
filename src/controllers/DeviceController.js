@@ -1,4 +1,4 @@
-const Device = require('../adapters/Device')
+const DeviceProvider = require('../providers/Device')
 const auth = require('../helpers/authenticate')
 const respondWithError = require('../helpers/respondWithError')
 const { NotFoundError } = require('../helpers/errors')
@@ -15,7 +15,7 @@ module.exports = class DeviceController {
 	onIndex (req, res) {
 		if ( ! this._acceptsJSON(req, res)) return
 
-		Device.find().then((devices) => {
+		DeviceProvider.find().then((devices) => {
 			res.json(devices)
 		}).catch((err) => {
 			this._log.error(err)
@@ -25,7 +25,7 @@ module.exports = class DeviceController {
 	onShow (req, res) {
 		if ( ! this._acceptsJSON(req, res)) return
 
-		Device.findByUDID(req.params.udid).then((device) => {
+		DeviceProvider.findByUDID(req.params.udid).then((device) => {
 			res.json(device)
 		}).catch(NotFoundError, () => {
 			respondWithError(res, 404, 'Device not found.')
