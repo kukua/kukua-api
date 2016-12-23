@@ -1,0 +1,38 @@
+{
+	"plugins": [],
+	"extends": ["eslint:recommended"],
+	"rules": {
+		"indent": [
+			2,
+			"tab"
+		],
+		"quotes": [
+			2,
+			"single"
+		],
+		"linebreak-style": [
+			2,
+			"unix"
+		],
+		"semi": [
+			2,
+			"never"
+		],
+		"comma-dangle": [
+			0,
+			"never"
+		],
+		"no-console": [
+			0
+		],
+		"react/no-unknown-property": [
+			0
+		]
+	},
+	"env": {
+		"es6": true,
+		"browser": true,
+		"node": true,
+		"jquery": true
+	}
+}
