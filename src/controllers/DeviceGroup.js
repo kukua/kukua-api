@@ -1,7 +1,6 @@
 const DeviceProvider = require('../providers/Device')
 const DeviceGroupProvider = require('../providers/DeviceGroup')
 const auth = require('../helpers/authenticate')
-const acceptsJSON = require('../helpers/acceptsJSON')
 const respondWithError = require('../helpers/respondWithError')
 const respondWithOK = require('../helpers/respondWithOK')
 const { NotFoundError } = require('../helpers/errors')
@@ -17,8 +16,6 @@ module.exports = class DeviceGroupController {
 	}
 
 	onIndex (req, res) {
-		if ( ! acceptsJSON(req, res)) return
-
 		DeviceGroupProvider.find().then((groups) => {
 			return Promise.all(groups.map((group) => this._addIncludes(req, group)))
 		}).then((groups) => {
@@ -29,8 +26,6 @@ module.exports = class DeviceGroupController {
 		})
 	}
 	onAdd (req, res) {
-		if ( ! acceptsJSON(req, res)) return
-
 		DeviceProvider.findByUDID(req.params.udid).then((device) => {
 			return DeviceGroupProvider.addDeviceToGroup(device, req.params.groupId)
 		}).then(() => {
@@ -43,8 +38,6 @@ module.exports = class DeviceGroupController {
 		})
 	}
 	onRemove (req, res) {
-		if ( ! acceptsJSON(req, res)) return
-
 		DeviceProvider.findByUDID(req.params.udid).then((device) => {
 			return DeviceGroupProvider.removeDeviceFromGroup(device, req.params.groupId)
 		}).then(() => {

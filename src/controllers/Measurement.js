@@ -1,5 +1,4 @@
 const auth = require('../helpers/authenticate')
-const acceptsJSON = require('../helpers/acceptsJSON')
 const MeasurementProvider = require('../providers/Measurement')
 const MeasurementFilterProvider = require('../providers/MeasurementFilter')
 const respondWithError = require('../helpers/respondWithError')
@@ -13,8 +12,6 @@ module.exports = class MeasurementController {
 	}
 
 	onIndex (req, res) {
-		if ( ! acceptsJSON(req, res)) return
-
 		MeasurementFilterProvider.fromRequest(req).then((filter) => {
 			return MeasurementProvider.findByFilter(filter)
 		}).then((measurements) => {

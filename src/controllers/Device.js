@@ -1,6 +1,5 @@
 const Promise = require('bluebird')
 const auth = require('../helpers/authenticate')
-const acceptsJSON = require('../helpers/acceptsJSON')
 const getRequestedUDIDs = require('../helpers/getRequestedUDIDs')
 const DeviceProvider = require('../providers/Device')
 const DeviceGroupProvider = require('../providers/DeviceGroup')
@@ -17,8 +16,6 @@ module.exports = class DeviceController {
 	}
 
 	onIndex (req, res) {
-		if ( ! acceptsJSON(req, res)) return
-
 		getRequestedUDIDs(req).then((udids) => {
 			if (udids) {
 				return DeviceProvider.find({ udid: udids })
@@ -35,8 +32,6 @@ module.exports = class DeviceController {
 		})
 	}
 	onShow (req, res) {
-		if ( ! acceptsJSON(req, res)) return
-
 		DeviceProvider.findByUDID(req.params.udid).then((device) => {
 			return this._addIncludes(req, device)
 		}).then((device) => {
