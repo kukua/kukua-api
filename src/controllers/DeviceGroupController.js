@@ -11,10 +11,23 @@ module.exports = class DeviceGroupController {
 		//this._app = app
 		this._log = log
 
+		app.get('/deviceGroups', auth(), this.onIndex.bind(this))
 		app.put('/devices/:udid([\\da-fA-F]{16})/groups/:groupId([\\da-z\\-]+)', auth(), this.onAdd.bind(this))
 		app.delete('/devices/:udid([\\da-fA-F]{16})/groups/:groupId([\\da-z\\-]+)', auth(), this.onRemove.bind(this))
 	}
 
+	onIndex (req, res) {
+		if ( ! acceptsJSON(req, res)) return
+
+		DeviceGroupProvider.find().then((groups) => {
+			return Promise.all(groups.map((group) => this._addIncludes(req, group)))
+		}).then((groups) => {
+			res.json(groups)
+		}).catch((err) => {
+			this._log.error(err)
+			respondWithError(res)
+		})
+	}
 	onAdd (req, res) {
 		if ( ! acceptsJSON(req, res)) return
 
@@ -26,10 +39,9 @@ module.exports = class DeviceGroupController {
 			respondWithError(res, 404, 'Device not found.')
 		}).catch((err) => {
 			this._log.error(err)
-			respondWithError(res, 500)
+			respondWithError(res)
 		})
 	}
-
 	onRemove (req, res) {
 		if ( ! acceptsJSON(req, res)) return
 
@@ -41,7 +53,26 @@ module.exports = class DeviceGroupController {
 			respondWithError(res, 404, 'Device not found.')
 		}).catch((err) => {
 			this._log.error(err)
-			respondWithError(res, 500)
+			respondWithError(res)
 		})
+	}
+
+	_addIncludes (req, group) {
+		if ( ! req.query.include) return Promise.resolve(group)
+
+		var includes = []
+
+		req.query.include.split(',').forEach((include) => {
+			var udids = group.get('device_udids')
+			if (include === 'devices' && Array.isArray(udids)) {
+				return includes.push(
+					Promise.all(udids.map((udid) => DeviceProvider.findByUDID(udid))).then((devices) => {
+						group.set('devices', devices)
+					})
+				)
+			}
+		})
+
+		return Promise.all(includes).then(() => Promise.resolve(group))
 	}
 }

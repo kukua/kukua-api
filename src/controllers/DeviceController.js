@@ -24,7 +24,7 @@ module.exports = class DeviceController {
 			res.json(devices)
 		}).catch((err) => {
 			this._log.error(err)
-			respondWithError(res, 500)
+			respondWithError(res)
 		})
 	}
 	onShow (req, res) {
@@ -38,7 +38,7 @@ module.exports = class DeviceController {
 			respondWithError(res, 404, 'Device not found.')
 		}).catch((err) => {
 			this._log.error(err)
-			respondWithError(res, 500)
+			respondWithError(res)
 		})
 	}
 
