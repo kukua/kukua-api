@@ -4,6 +4,7 @@ module.exports = (
 	message = 'Woah! Something went wrong. We have been notified.'
 ) => {
 	res.status(statusCode).send({
-		error: { statusCode, message },
+		statusCode,
+		message,
 	})
 }

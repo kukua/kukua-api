@@ -31,7 +31,7 @@ Device.hasMany(DeviceLabel, { as: 'labels' })
 DeviceLabel.belongsTo(Device)
 
 const labelsToAttributes = ['altitude', 'country', 'longitude', 'latitude', 'timezone']
-const getAttributes = (device) => {
+const createModel = (device) => {
 	var attributes = device.get()
 
 	labelsToAttributes.forEach((key) => attributes[key] = null)
@@ -46,7 +46,7 @@ const getAttributes = (device) => {
 	delete attributes.id
 	delete attributes.labels
 
-	return attributes
+	return new DeviceModel(attributes)
 }
 
 module.exports = {
@@ -60,7 +60,7 @@ module.exports = {
 				required: false,
 			},
 		}).then((devices) => {
-			resolve(devices.map((device) => new DeviceModel(getAttributes(device))))
+			resolve(devices.map((device) => createModel(device)))
 		}).catch((err) => reject(err))
 	}),
 	findByUDID: (udid) => new Promise((resolve, reject) => {
@@ -76,7 +76,7 @@ module.exports = {
 		}).then((device) => {
 			if ( ! device) throw new NotFoundError()
 
-			resolve(new DeviceModel(getAttributes(device)))
+			resolve(createModel(device))
 		}).catch((err) => reject(err))
 	}),
 }

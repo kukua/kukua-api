@@ -3,6 +3,7 @@ const express = require('express')
 try { require('dotenv').config() } catch (ex) { /* Do nothing */ }
 
 const DeviceController = require('./controllers/DeviceController')
+const DeviceGroupController = require('./controllers/DeviceGroupController')
 const app = express()
 const port = Number(process.env.PORT || 3000)
 const logPath = String(process.env.LOG_PATH || '/tmp/output.log')
@@ -18,5 +19,6 @@ app.use((req, res, next) => {
 })
 
 new DeviceController(app, log)
+new DeviceGroupController(app, log)
 
 app.listen(port, () => log.info({ type: 'status' }, 'Listening on port ' + port))

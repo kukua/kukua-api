@@ -1,5 +1,8 @@
+const Promise = require('bluebird')
 const DeviceProvider = require('../providers/Device')
+const DeviceGroupProvider = require('../providers/DeviceGroup')
 const auth = require('../helpers/authenticate')
+const acceptsJSON = require('../helpers/acceptsJSON')
 const respondWithError = require('../helpers/respondWithError')
 const { NotFoundError } = require('../helpers/errors')
 
@@ -13,9 +16,11 @@ module.exports = class DeviceController {
 	}
 
 	onIndex (req, res) {
-		if ( ! this._acceptsJSON(req, res)) return
+		if ( ! acceptsJSON(req, res)) return
 
 		DeviceProvider.find().then((devices) => {
+			return Promise.all(devices.map((device) => this._addIncludes(req, device)))
+		}).then((devices) => {
 			res.json(devices)
 		}).catch((err) => {
 			this._log.error(err)
@@ -23,9 +28,11 @@ module.exports = class DeviceController {
 		})
 	}
 	onShow (req, res) {
-		if ( ! this._acceptsJSON(req, res)) return
+		if ( ! acceptsJSON(req, res)) return
 
 		DeviceProvider.findByUDID(req.params.udid).then((device) => {
+			return this._addIncludes(req, device)
+		}).then((device) => {
 			res.json(device)
 		}).catch(NotFoundError, () => {
 			respondWithError(res, 404, 'Device not found.')
@@ -35,12 +42,21 @@ module.exports = class DeviceController {
 		})
 	}
 
-	_acceptsJSON (req, res) {
-		if (req.accepts(['json', 'application/json'])) {
-			return true
-		}
+	_addIncludes (req, device) {
+		if ( ! req.query.include) return Promise.resolve(device)
 
-		respondWithError(res, 400, 'Request does not accept JSON response.')
-		return false
+		var includes = []
+
+		req.query.include.split(',').forEach((include) => {
+			if (include === 'groups') {
+				return includes.push(
+					DeviceGroupProvider.findByDevice(device).then((groups) => {
+						device.set('groups', groups)
+					})
+				)
+			}
+		})
+
+		return Promise.all(includes).then(() => Promise.resolve(device))
 	}
 }

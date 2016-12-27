@@ -1,9 +1,7 @@
-module.exports = class Device {
-	constructor (attributes) {
-		this._attributes = attributes || {}
-	}
+const Base = require('./Base')
 
-	toJSON () {
-		return this._attributes
+module.exports = class Device extends Base {
+	get id () {
+		return this.get('udid')
 	}
 }
