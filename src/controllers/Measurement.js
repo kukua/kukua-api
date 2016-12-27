@@ -1,6 +1,8 @@
+const Promise = require('bluebird')
 const auth = require('../helpers/authenticate')
-const MeasurementProvider = require('../providers/Measurement')
+const getRequestedUDIDs = require('../helpers/getRequestedUDIDs')
 const MeasurementFilterProvider = require('../providers/MeasurementFilter')
+const MeasurementProvider = require('../providers/Measurement')
 const respondWithError = require('../helpers/respondWithError')
 
 module.exports = class MeasurementController {
@@ -12,7 +14,11 @@ module.exports = class MeasurementController {
 	}
 
 	onIndex (req, res) {
-		MeasurementFilterProvider.fromRequest(req).then((filter) => {
+		Promise.all([
+			MeasurementFilterProvider.fromRequest(req),
+			getRequestedUDIDs(req),
+		]).then(([ filter, udids ]) => {
+			filter.setUDIDs(udids)
 			return MeasurementProvider.findByFilter(filter)
 		}).then((measurements) => {
 			res.json(measurements)

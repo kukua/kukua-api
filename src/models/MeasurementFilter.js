@@ -19,11 +19,13 @@ module.exports = class MeasurementFilter {
 		}
 
 		this._udids = udids
+		return this
 	}
 	addField (name, aggregator = 'avg') {
 		if (aggregators.indexOf(aggregator) === -1) throw new Error('Invalid aggregator.')
 
 		this._fields.push({ name, aggregator })
+		return this
 	}
 	setInterval (interval) {
 		interval = Math.round(interval)
@@ -36,19 +38,23 @@ module.exports = class MeasurementFilter {
 		}
 
 		this._interval = interval
+		return this
 	}
 	setFrom (date) {
 		if ( ! (date instanceof moment)) throw new Error('Invalid from date.')
 
 		this._from = date
+		return this
 	}
 	setTo (date) {
 		if ( ! (date instanceof moment)) throw new Error('Invalid to date.')
 
 		this._to = date
+		return this
 	}
 	addSort (name, order = 1) {
 		this._sort.push({ name, order })
+		return this
 	}
 	setLimit (limit) {
 		limit = Math.round(limit)
@@ -58,5 +64,6 @@ module.exports = class MeasurementFilter {
 		}
 
 		this._limit = limit
+		return this
 	}
 }

@@ -1,14 +1,12 @@
+const Promise = require('bluebird')
 const moment = require('moment-timezone')
-const getRequestedUDIDs = require('../helpers/getRequestedUDIDs')
 const MeasurementFilterModel = require('../models/MeasurementFilter')
 
 module.exports = {
-	fromRequest (req) {
-		return getRequestedUDIDs(req).then((udids) => {
+	fromRequest: (req) => new Promise((resolve, reject) => {
+		try {
 			var filter = new MeasurementFilterModel()
 			var { fields, interval, from, to, sort, limit } = req.query
-
-			filter.setUDIDs(udids)
 
 			if (fields) {
 				fields.split(',').forEach((field) => {
@@ -31,7 +29,9 @@ module.exports = {
 			}
 			if (limit) filter.setLimit(parseInt(limit))
 
-			return filter
-		})
-	},
+			resolve(filter)
+		} catch (err) {
+			reject(err)
+		}
+	}),
 }
