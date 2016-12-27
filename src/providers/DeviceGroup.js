@@ -34,6 +34,14 @@ module.exports = {
 			resolve(groups.map((group) => createModel(group)))
 		})
 	}),
+	findById: (groupId) => new Promise((resolve, reject) => {
+		if (slugify(groupId) !== groupId) return reject('Invalid groupId given (lowercase slug required).')
+
+		db.find({ id: groupId }).sort({ name: 1 }).exec((err, groups) => {
+			if (err) return reject(err)
+			resolve(groups.map((group) => createModel(group)))
+		})
+	}),
 	findByDevice: (device) => new Promise((resolve, reject) => {
 		if ( ! (device instanceof DeviceModel)) return reject('Invalid Device given.')
 

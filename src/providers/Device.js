@@ -52,8 +52,15 @@ const createModel = (device) => {
 module.exports = {
 	Model: Device,
 
-	find: () => new Promise((resolve, reject) => {
+	find: (options = {}) => new Promise((resolve, reject) => {
+		var where = {}
+
+		if (Array.isArray(options.udid)) {
+			where.udid = { $in: options.udid }
+		}
+
 		Device.findAll({
+			where,
 			include: {
 				model: DeviceLabel,
 				as: 'labels',

@@ -18,8 +18,6 @@ module.exports = (name, logPath) => {
 	// Add stack to errors
 	var logError = log.error.bind(log)
 	log.error = (data, err) => {
-		console.log(data, err, data instanceof Error)
-
 		if (err === undefined) {
 			err = data
 			data = {}

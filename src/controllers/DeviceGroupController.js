@@ -58,11 +58,11 @@ module.exports = class DeviceGroupController {
 	}
 
 	_addIncludes (req, group) {
-		if ( ! req.query.include) return Promise.resolve(group)
+		if ( ! req.query.includes) return Promise.resolve(group)
 
 		var includes = []
 
-		req.query.include.split(',').forEach((include) => {
+		req.query.includes.split(',').forEach((include) => {
 			var udids = group.get('device_udids')
 			if (include === 'devices' && Array.isArray(udids)) {
 				return includes.push(

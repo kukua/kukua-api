@@ -1,3 +1,4 @@
+const _ = require('underscore')
 const Promise = require('bluebird')
 const DeviceProvider = require('../providers/Device')
 const DeviceGroupProvider = require('../providers/DeviceGroup')
@@ -18,7 +19,26 @@ module.exports = class DeviceController {
 	onIndex (req, res) {
 		if ( ! acceptsJSON(req, res)) return
 
-		DeviceProvider.find().then((devices) => {
+		var groups = req.query.groups
+		var devicesPromise
+
+		if (groups) {
+			var groupsPromises = groups.split(',').map((groupId) => DeviceGroupProvider.findById(groupId))
+			devicesPromise = Promise.all(groupsPromises).then((groups) => {
+				var udids = _.chain(groups)
+					.flatten()
+					.map((group) => group.get('device_udids'))
+					.flatten()
+					.uniq()
+					.value()
+
+				return DeviceProvider.find({ udid: udids })
+			})
+		} else {
+			devicesPromise = DeviceProvider.find()
+		}
+
+		devicesPromise.then((devices) => {
 			return Promise.all(devices.map((device) => this._addIncludes(req, device)))
 		}).then((devices) => {
 			res.json(devices)
@@ -43,11 +63,11 @@ module.exports = class DeviceController {
 	}
 
 	_addIncludes (req, device) {
-		if ( ! req.query.include) return Promise.resolve(device)
+		if ( ! req.query.includes) return Promise.resolve(device)
 
 		var includes = []
 
-		req.query.include.split(',').forEach((include) => {
+		req.query.includes.split(',').forEach((include) => {
 			if (include === 'groups') {
 				return includes.push(
 					DeviceGroupProvider.findByDevice(device).then((groups) => {
