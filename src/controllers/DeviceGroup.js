@@ -1,9 +1,7 @@
 const auth = require('../helpers/authenticate')
 const DeviceGroup = require('../models/DeviceGroup')
 const addIncludes = require('../helpers/addIncludes')
-const respondWithError = require('../helpers/respondWithError')
 const Device = require('../models/Device')
-const respondWithOK = require('../helpers/respondWithOK')
 const { NotFoundError } = require('../helpers/errors')
 
 module.exports = class DeviceGroupController {
@@ -20,33 +18,22 @@ module.exports = class DeviceGroupController {
 			return Promise.all(groups.map((group) => addIncludes(req, group)))
 		}).then((groups) => {
 			res.json(groups)
-		}).catch((err) => {
-			this._log.error(err)
-			respondWithError(res)
-		})
+		}).catch((err) => { res.error(err) })
 	}
 	onAdd (req, res) {
 		Device.findByUDID(req.params.udid).then((device) => {
 			return DeviceGroup.addDeviceToGroup(device, req.params.groupId)
 		}).then(() => {
-			respondWithOK(res)
-		}).catch(NotFoundError, () => {
-			respondWithError(res, 404, 'Device not found.')
-		}).catch((err) => {
-			this._log.error(err)
-			respondWithError(res)
-		})
+			res.ok()
+		}).catch(NotFoundError, () => { res.status(404).error('Device not found.')
+		}).catch((err) => { res.error(err) })
 	}
 	onRemove (req, res) {
 		Device.findByUDID(req.params.udid).then((device) => {
 			return DeviceGroup.removeDeviceFromGroup(device, req.params.groupId)
 		}).then(() => {
-			respondWithOK(res)
-		}).catch(NotFoundError, () => {
-			respondWithError(res, 404, 'Device not found.')
-		}).catch((err) => {
-			this._log.error(err)
-			respondWithError(res)
-		})
+			res.ok()
+		}).catch(NotFoundError, () => { res.status(404).error('Device not found.')
+		}).catch((err) => { res.error(err) })
 	}
 }

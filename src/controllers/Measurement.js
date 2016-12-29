@@ -3,7 +3,6 @@ const auth = require('../helpers/authenticate')
 const MeasurementFilter = require('../models/MeasurementFilter')
 const getRequestedUDIDs = require('../helpers/getRequestedUDIDs')
 const Measurement = require('../models/Measurement')
-const respondWithError = require('../helpers/respondWithError')
 
 module.exports = class MeasurementController {
 	constructor (app, log) {
@@ -21,9 +20,6 @@ module.exports = class MeasurementController {
 			return Measurement.findByFilter(filter)
 		}).then((measurements) => {
 			res.json(measurements)
-		}).catch((err) => {
-			this._log.error(err)
-			respondWithError(res)
-		})
+		}).catch((err) => { res.error(err) })
 	}
 }
