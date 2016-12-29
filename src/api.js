@@ -2,6 +2,8 @@ const express = require('express')
 
 try { require('dotenv').config() } catch (ex) { /* Do nothing */ }
 
+require('./models') // Preload models and relations
+
 const DeviceController = require('./controllers/Device')
 const DeviceGroupController = require('./controllers/DeviceGroup')
 const MeasurementController = require('./controllers/Measurement')

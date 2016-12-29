@@ -1,8 +1,9 @@
 const moment = require('moment-timezone')
+const mapProviderMethods = require('../helpers/mapProviderMethods')
 
 const aggregators = ['avg', 'min', 'max']
 
-module.exports = class MeasurementFilter {
+class MeasurementFilterModel {
 	constructor () {
 		this._udids = []
 		this._fields = []
@@ -67,3 +68,10 @@ module.exports = class MeasurementFilter {
 		return this
 	}
 }
+
+MeasurementFilterModel.setProvider = (MeasurementFilterProvider) => {
+	mapProviderMethods(MeasurementFilterModel, MeasurementFilterProvider)
+}
+//MeasurementFilterModel.setRelations = () => {}
+
+module.exports = MeasurementFilterModel

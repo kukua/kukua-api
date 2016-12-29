@@ -13,5 +13,5 @@ var DeviceLabel = sequelize('concava').define('device_label', {
 })
 
 module.exports = {
-	Model: DeviceLabel,
+	SequelizeModel: DeviceLabel,
 }

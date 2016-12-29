@@ -1,13 +1,13 @@
-const DeviceProvider = require('../providers/Device')
-const DeviceGroupProvider = require('../providers/DeviceGroup')
 const auth = require('../helpers/authenticate')
+const DeviceGroup = require('../models/DeviceGroup')
+const addIncludes = require('../helpers/addIncludes')
 const respondWithError = require('../helpers/respondWithError')
+const Device = require('../models/Device')
 const respondWithOK = require('../helpers/respondWithOK')
 const { NotFoundError } = require('../helpers/errors')
 
 module.exports = class DeviceGroupController {
 	constructor (app, log) {
-		//this._app = app
 		this._log = log
 
 		app.get('/deviceGroups', auth(), this.onIndex.bind(this))
@@ -16,8 +16,8 @@ module.exports = class DeviceGroupController {
 	}
 
 	onIndex (req, res) {
-		DeviceGroupProvider.find().then((groups) => {
-			return Promise.all(groups.map((group) => this._addIncludes(req, group)))
+		DeviceGroup.find().then((groups) => {
+			return Promise.all(groups.map((group) => addIncludes(req, group)))
 		}).then((groups) => {
 			res.json(groups)
 		}).catch((err) => {
@@ -26,8 +26,8 @@ module.exports = class DeviceGroupController {
 		})
 	}
 	onAdd (req, res) {
-		DeviceProvider.findByUDID(req.params.udid).then((device) => {
-			return DeviceGroupProvider.addDeviceToGroup(device, req.params.groupId)
+		Device.findByUDID(req.params.udid).then((device) => {
+			return DeviceGroup.addDeviceToGroup(device, req.params.groupId)
 		}).then(() => {
 			respondWithOK(res)
 		}).catch(NotFoundError, () => {
@@ -38,8 +38,8 @@ module.exports = class DeviceGroupController {
 		})
 	}
 	onRemove (req, res) {
-		DeviceProvider.findByUDID(req.params.udid).then((device) => {
-			return DeviceGroupProvider.removeDeviceFromGroup(device, req.params.groupId)
+		Device.findByUDID(req.params.udid).then((device) => {
+			return DeviceGroup.removeDeviceFromGroup(device, req.params.groupId)
 		}).then(() => {
 			respondWithOK(res)
 		}).catch(NotFoundError, () => {
@@ -48,24 +48,5 @@ module.exports = class DeviceGroupController {
 			this._log.error(err)
 			respondWithError(res)
 		})
-	}
-
-	_addIncludes (req, group) {
-		if ( ! req.query.includes) return Promise.resolve(group)
-
-		var includes = []
-
-		req.query.includes.split(',').forEach((include) => {
-			var udids = group.get('device_udids')
-			if (include === 'devices' && Array.isArray(udids)) {
-				return includes.push(
-					Promise.all(udids.map((udid) => DeviceProvider.findByUDID(udid))).then((devices) => {
-						group.set('devices', devices)
-					})
-				)
-			}
-		})
-
-		return Promise.all(includes).then(() => Promise.resolve(group))
 	}
 }

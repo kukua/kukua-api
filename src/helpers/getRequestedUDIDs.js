@@ -1,6 +1,6 @@
 const _ = require('underscore')
 const Promise = require('bluebird')
-const DeviceGroupProvider = require('../providers/DeviceGroup')
+const DeviceGroup = require('../models/DeviceGroup')
 
 module.exports = (req) => {
 	// &udids=abcdef0123456789,...
@@ -13,7 +13,7 @@ module.exports = (req) => {
 	var groups = req.query.groups
 
 	if (groups) {
-		return Promise.all(groups.split(',').map((groupId) => DeviceGroupProvider.findById(groupId)))
+		return Promise.all(groups.split(',').map((groupId) => DeviceGroup.findById(groupId)))
 			.then((results) => {
 				return _.uniq(
 					_.chain(results)

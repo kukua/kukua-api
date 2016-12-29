@@ -1,14 +1,13 @@
 const Promise = require('bluebird')
 const auth = require('../helpers/authenticate')
 const getRequestedUDIDs = require('../helpers/getRequestedUDIDs')
-const DeviceProvider = require('../providers/Device')
-const DeviceGroupProvider = require('../providers/DeviceGroup')
+const Device = require('../models/Device')
+const addIncludes = require('../helpers/addIncludes')
 const respondWithError = require('../helpers/respondWithError')
 const { NotFoundError } = require('../helpers/errors')
 
 module.exports = class DeviceController {
 	constructor (app, log) {
-		//this._app = app
 		this._log = log
 
 		app.get('/devices', auth(), this.onIndex.bind(this))
@@ -17,11 +16,11 @@ module.exports = class DeviceController {
 
 	onIndex (req, res) {
 		getRequestedUDIDs(req).then((udids) => {
-			if (udids) return DeviceProvider.find({ udid: udids })
+			if (udids) return Device.find({ udid: udids })
 
-			return DeviceProvider.find() // All
+			return Device.find()
 		}).then((devices) => {
-			return Promise.all(devices.map((device) => this._addIncludes(req, device)))
+			return Promise.all(devices.map((device) => addIncludes(req, device)))
 		}).then((devices) => {
 			res.json(devices)
 		}).catch((err) => {
@@ -30,8 +29,8 @@ module.exports = class DeviceController {
 		})
 	}
 	onShow (req, res) {
-		DeviceProvider.findByUDID(req.params.udid).then((device) => {
-			return this._addIncludes(req, device)
+		Device.findByUDID(req.params.udid).then((device) => {
+			return addIncludes(req, device)
 		}).then((device) => {
 			res.json(device)
 		}).catch(NotFoundError, () => {
@@ -40,23 +39,5 @@ module.exports = class DeviceController {
 			this._log.error(err)
 			respondWithError(res)
 		})
-	}
-
-	_addIncludes (req, device) {
-		if ( ! req.query.includes) return Promise.resolve(device)
-
-		var includes = []
-
-		req.query.includes.split(',').forEach((include) => {
-			if (include === 'groups') {
-				return includes.push(
-					DeviceGroupProvider.findByDevice(device).then((groups) => {
-						device.set('groups', groups)
-					})
-				)
-			}
-		})
-
-		return Promise.all(includes).then(() => Promise.resolve(device))
 	}
 }

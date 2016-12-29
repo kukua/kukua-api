@@ -1,9 +1,9 @@
 const Sequelize = require('sequelize')
 const Promise = require('bluebird')
 const sequelize = require('../helpers/sequelize')
-const DeviceModel = require('../models/Device')
 const { NotFoundError } = require('../helpers/errors')
-const DeviceLabel = require('./DeviceLabel').Model
+const DeviceModel = require('../models/Device')
+const DeviceLabel = require('./DeviceLabel').SequelizeModel
 
 var Device = sequelize('concava').define('device', {
 	id: {
@@ -50,7 +50,7 @@ const createModel = (device) => {
 }
 
 module.exports = {
-	Model: Device,
+	//SequelizeModel: Device,
 
 	find: (options = {}) => new Promise((resolve, reject) => {
 		var where = {}

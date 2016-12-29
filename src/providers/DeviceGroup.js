@@ -6,10 +6,10 @@ const db = new Datastore({
 	autoload: true,
 	timestampData: true,
 })
+const DeviceGroup = require('../models/DeviceGroup')
+const Device = require('../models/Device')
 const slugify = require('underscore.string/slugify')
 const humanize = require('underscore.string/humanize')
-const DeviceModel = require('../models/Device')
-const DeviceGroupModel = require('../models/DeviceGroup')
 
 db.ensureIndex({ fieldName: 'id', unique: true }, (err) => {
 	if (err) throw new Error(err)
@@ -24,7 +24,7 @@ const createModel = (group) => {
 		updated_at: group.updatedAt,
 	}
 
-	return new DeviceGroupModel(attributes)
+	return new DeviceGroup(attributes)
 }
 
 module.exports = {
@@ -43,7 +43,7 @@ module.exports = {
 		})
 	}),
 	findByDevice: (device) => new Promise((resolve, reject) => {
-		if ( ! (device instanceof DeviceModel)) return reject('Invalid Device given.')
+		if ( ! (device instanceof Device)) return reject('Invalid Device given.')
 
 		db.find({ device_udids: device.id }, (err, groups) => {
 			if (err) return reject(err)
@@ -51,7 +51,7 @@ module.exports = {
 		})
 	}),
 	addDeviceToGroup: (device, groupId) => new Promise((resolve, reject) => {
-		if ( ! (device instanceof DeviceModel)) return reject('Invalid Device given.')
+		if ( ! (device instanceof Device)) return reject('Invalid Device given.')
 		if (slugify(groupId) !== groupId) return reject('Invalid groupId given (lowercase slug required).')
 
 		db.update(
@@ -65,7 +65,7 @@ module.exports = {
 		)
 	}),
 	removeDeviceFromGroup: (device, groupId) => new Promise((resolve, reject) => {
-		if ( ! (device instanceof DeviceModel)) return reject('Invalid Device given.')
+		if ( ! (device instanceof Device)) return reject('Invalid Device given.')
 		if (slugify(groupId) !== groupId) return reject('Invalid groupId given (lowercase slug required).')
 
 		db.update(
