@@ -7,7 +7,7 @@ GET /devices
 GET /devices?groups=tanzania
 GET /devices/abcdef0123456789
 
-GET /devices/abcdef0123456789?includes=groups
+GET /devices/abcdef0123456789?includes=groups,template
 PUT /devices/abcdef0123456789/groups/tanzania
 DELETE /devices/abcdef0123456789/groups/tanzania
 GET /deviceGroups?includes=devices

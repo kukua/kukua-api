@@ -1,7 +1,7 @@
 const Base = require('./Base')
 const mapProviderMethods = require('../helpers/mapProviderMethods')
 
-var DeviceGroup
+var DeviceGroup, Template
 
 class DeviceModel extends Base {
 	get id () {
@@ -13,13 +13,19 @@ class DeviceModel extends Base {
 			this.set('groups', groups)
 		})
 	}
+	_loadTemplate () {
+		return Template.findByDevice(this).then((template) => {
+			this.set('template', template)
+		})
+	}
 }
 
 DeviceModel.setProvider = (DeviceProvider) => {
 	mapProviderMethods(DeviceModel, DeviceProvider)
 }
-DeviceModel.setRelations = (DeviceGroupModel) => {
+DeviceModel.setRelations = (DeviceGroupModel, TemplateModel) => {
 	DeviceGroup = DeviceGroupModel
+	Template = TemplateModel
 }
 
 module.exports = DeviceModel

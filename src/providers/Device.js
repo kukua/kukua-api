@@ -3,7 +3,7 @@ const Promise = require('bluebird')
 const sequelize = require('../helpers/sequelize')
 const { NotFoundError } = require('../helpers/errors')
 const DeviceModel = require('../models/Device')
-const DeviceLabel = require('./DeviceLabel').SequelizeModel
+const DeviceLabel = require('./_DeviceLabel').SequelizeModel
 
 var Device = sequelize('concava').define('device', {
 	id: {
@@ -24,6 +24,7 @@ var Device = sequelize('concava').define('device', {
 			notEmpty: true,
 		},
 	},
+	template_id: Sequelize.INTEGER,
 	name: Sequelize.STRING,
 })
 
@@ -32,31 +33,34 @@ DeviceLabel.belongsTo(Device)
 
 const labelsToAttributes = ['altitude', 'country', 'longitude', 'latitude', 'timezone']
 const createModel = (device) => {
-	var attributes = device.get()
+	var attr = device.get()
 
-	labelsToAttributes.forEach((key) => attributes[key] = null)
-	attributes.labels.forEach((label) => {
+	labelsToAttributes.forEach((key) => attr[key] = null)
+	attr.labels.forEach((label) => {
 		if (labelsToAttributes.indexOf(label.key) === -1) return
 
 		try {
-			attributes[label.key] = JSON.parse(label.value)
+			attr[label.key] = JSON.parse(label.value)
 		} catch (ex) { /* Ignore */ }
 	})
 
-	delete attributes.id
-	delete attributes.labels
+	delete attr.id
+	delete attr.labels
 
-	return new DeviceModel(attributes)
+	return new DeviceModel(attr)
 }
 
 module.exports = {
-	//SequelizeModel: Device,
+	SequelizeModel: Device,
 
 	find: (options = {}) => new Promise((resolve, reject) => {
 		var where = {}
 
 		if (Array.isArray(options.udid)) {
 			where.udid = { $in: options.udid }
+		}
+		if (typeof options.template_id === 'number') {
+			where.template_id = options.template_id
 		}
 
 		Device.findAll({
