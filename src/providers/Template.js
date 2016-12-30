@@ -1,12 +1,12 @@
 const Promise = require('bluebird')
 const Sequelize = require('sequelize')
-const sequelize = require('../helpers/sequelize')
+const sequelize = require('../helpers/sequelize')('concava')
 const Device = require('./Device').SequelizeModel
 const Attribute = require('./_Attribute').SequelizeModel
 const TemplateModel = require('../models/Template')
 const DeviceModel = require('../models/Device')
 
-var Template = sequelize('concava').define('template', {
+var Template = sequelize.define('template', {
 	id: {
 		type: Sequelize.INTEGER,
 		primaryKey: true,

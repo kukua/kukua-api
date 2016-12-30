@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize')
-const sequelize = require('../helpers/sequelize')
+const sequelize = require('../helpers/sequelize')('concava')
 
-var Attribute = sequelize('concava').define('attribute', {
+var Attribute = sequelize.define('attribute', {
 	id: {
 		type: Sequelize.INTEGER,
 		primaryKey: true,

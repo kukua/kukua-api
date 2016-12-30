@@ -13,10 +13,18 @@ module.exports = {
 					var [ name, aggregator ] = field.split(':')
 					filter.addField(name, aggregator)
 				})
+			} else {
+				filter.addField('timestamp')
 			}
-			if (interval) filter.setInterval(parseInt(interval))
-			if (from) filter.setFrom(moment.utc(from))
-			if (to) filter.setTo(moment.utc(to))
+			if (interval) {
+				filter.setInterval(parseInt(interval))
+			} else {
+				filter.setInterval(600)
+			}
+
+			filter.setFrom(from ? moment.utc(from) : moment.utc().subtract(1, 'day'))
+			filter.setTo(moment.utc(to || undefined))
+
 			if (sort) {
 				sort.split(',').forEach((name) => {
 					var order = 1
@@ -26,8 +34,12 @@ module.exports = {
 					}
 					filter.addSort(name, order)
 				})
+			} else {
+				filter.addSort('timestamp', -1)
 			}
-			if (limit) filter.setLimit(parseInt(limit))
+			if (limit) {
+				filter.setLimit(parseInt(limit))
+			}
 
 			resolve(filter)
 		} catch (err) {

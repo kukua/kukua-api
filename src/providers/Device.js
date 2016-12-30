@@ -1,11 +1,11 @@
 const Sequelize = require('sequelize')
 const Promise = require('bluebird')
-const sequelize = require('../helpers/sequelize')
+const sequelize = require('../helpers/sequelize')('concava')
 const { NotFoundError } = require('../helpers/errors')
 const DeviceModel = require('../models/Device')
 const DeviceLabel = require('./_DeviceLabel').SequelizeModel
 
-var Device = sequelize('concava').define('device', {
+var Device = sequelize.define('device', {
 	id: {
 		type: Sequelize.INTEGER,
 		primaryKey: true,
