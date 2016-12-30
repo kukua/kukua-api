@@ -31,18 +31,26 @@ var Device = sequelize('concava').define('device', {
 Device.hasMany(DeviceLabel, { as: 'labels' })
 DeviceLabel.belongsTo(Device)
 
-const labelsToAttributes = ['altitude', 'country', 'longitude', 'latitude', 'timezone']
+const locationLabels = ['altitude_meters', 'country', 'longitude', 'latitude', 'timezone']
 const createModel = (device) => {
 	var attr = device.get()
 
-	labelsToAttributes.forEach((key) => attr[key] = null)
+	attr.location = {}
+
+	var labels = {}
 	attr.labels.forEach((label) => {
-		if (labelsToAttributes.indexOf(label.key) === -1) return
+		var key = label.key, value = null
 
 		try {
-			attr[label.key] = JSON.parse(label.value)
-		} catch (ex) { /* Ignore */ }
+			value = JSON.parse(label.value)
+		} catch (ex) { /* Do nothing */ }
+
+		if (key === 'altitude') key = 'altitude_meters'
+
+		labels[key] = value
 	})
+
+	locationLabels.forEach((key) => attr.location[key] = labels[key])
 
 	delete attr.id
 	delete attr.labels
