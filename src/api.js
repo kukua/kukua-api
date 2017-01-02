@@ -6,7 +6,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
 const port = Number(process.env.PORT || 3000)
-const version = require('../package.json').version
+const version = require('../package.json').version.replace('.0.0', '')
 
 const logPath = String(process.env.LOG_PATH || '/tmp/output.log')
 const log = require('./helpers/log')('api', logPath)
