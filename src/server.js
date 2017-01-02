@@ -30,8 +30,8 @@ express.response.error = function (err) {
 	this.req.log.error(err)
 
 	if (err instanceof Error) {
-		if (err.status) {
-			this.status(err.status)
+		if (err.statusCode) {
+			this.status(err.statusCode)
 		}
 
 		err = err.message
@@ -78,12 +78,14 @@ app.use((req, res, next) => {
 	next()
 })
 
+// Routing
 new UserController(app)
 new DeviceController(app)
 new DeviceGroupController(app)
 new MeasurementController(app)
 new JobController(app)
 
+// Error handling
 app.use((req, res, next) => {
 	res.error(new NotFoundError())
 	next()

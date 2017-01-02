@@ -11,6 +11,7 @@ module.exports = (database) => {
 				timestamps: true, // Updating timestamps is done by PostgreSQL triggers
 				underscored: true, // Use created_at and updated_at
 			},
+			logging: (process.env.NODE_ENV === 'production' ? false : console.log),
 		})
 	}
 
