@@ -12,5 +12,5 @@ PUT /devices/abcdef0123456789/groups/tanzania
 DELETE /devices/abcdef0123456789/groups/tanzania
 GET /deviceGroups?includes=devices
 
-#GET /measurements?group=Tanzania&fields=temp:avg&from=2016-12-01
+GET /measurements?groups=Tanzania&fields=timestamp,temp:avg&from=2016-12-01&to=2016-12-31&limit=100
 ```

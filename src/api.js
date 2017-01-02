@@ -33,10 +33,12 @@ express.response.error = function (err = 'Woah! Something went wrong. We have be
 		message: err,
 	})
 }
-express.response.ok = (data = {}) => this.status(200).json(Object.assign({
-	statusCode: 200,
-	message: 'OK',
-}, data))
+express.response.ok = function (data = {}) {
+	this.status(200).json(Object.assign({
+		statusCode: 200,
+		message: 'OK',
+	}, data))
+}
 
 // Prepare response
 app.use((req, res, next) => {

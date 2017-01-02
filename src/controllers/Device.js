@@ -15,7 +15,9 @@ module.exports = class DeviceController {
 
 	onIndex (req, res) {
 		getRequestedUDIDs(req).then((udids) => {
-			if (udids) return Device.find({ udid: udids })
+			if (udids.length > 0) {
+				return Device.find({ udid: udids })
+			}
 
 			return Device.find()
 		}).then((devices) => {
