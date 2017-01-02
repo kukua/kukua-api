@@ -6,6 +6,7 @@ const Device = require('./Device')
 const MeasurementFilter = require('./MeasurementFilter')
 const Measurement = require('./Measurement')
 const Template = require('./Template')
+const Job = require('./Job')
 
 const UserProvider = require('../providers/User')
 const UserConfigProvider = require('../providers/UserConfig')
@@ -14,6 +15,7 @@ const DeviceProvider = require('../providers/Device')
 const MeasurementFilterProvider = require('../providers/MeasurementFilter')
 const MeasurementProvider = require('../providers/Measurement')
 const TemplateProvider = require('../providers/Template')
+const JobProvider = require('../providers/Job')
 
 User.setProvider(UserProvider)
 UserConfig.setProvider(UserConfigProvider)
@@ -22,12 +24,15 @@ Device.setProvider(DeviceProvider)
 MeasurementFilter.setProvider(MeasurementFilterProvider)
 Measurement.setProvider(MeasurementProvider)
 Template.setProvider(TemplateProvider)
+Job.setProvider(JobProvider)
 
 User.setRelations(UserConfig)
+User.setRelations(Job)
 UserConfig.setRelations(User)
 DeviceGroup.setRelations(Device)
 Device.setRelations(DeviceGroup, Template)
 Template.setRelations(Device)
+Job.setRelations(User)
 
 module.exports = {
 	Base,

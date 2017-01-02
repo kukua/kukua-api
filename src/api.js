@@ -15,6 +15,7 @@ const UserController = require('./controllers/User')
 const DeviceController = require('./controllers/Device')
 const DeviceGroupController = require('./controllers/DeviceGroup')
 const MeasurementController = require('./controllers/Measurement')
+const JobController = require('./controllers/Job')
 
 log.level('debug')
 process.on('uncaughtException', (err) => log.error(err))
@@ -42,7 +43,7 @@ express.response.ok = function (data = {}) {
 	}, data))
 }
 
-// Prepare response
+// Middleware
 app.use(bodyParser.json({ limit: '100kb' }))
 app.use((req, res, next) => {
 	// Log request
@@ -68,5 +69,15 @@ new UserController(app, log)
 new DeviceController(app, log)
 new DeviceGroupController(app, log)
 new MeasurementController(app, log)
+new JobController(app, log)
+
+app.use((req, res, next) => {
+	res.status(404).error('Not found.')
+	next()
+})
+app.use((err, req, res, next) => {
+	res.status(500).error(err)
+	next()
+})
 
 app.listen(port, () => log.info({ type: 'status' }, 'Listening on port ' + port))
