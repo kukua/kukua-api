@@ -17,7 +17,10 @@ const DeviceGroupController = require('./controllers/DeviceGroup')
 const MeasurementController = require('./controllers/Measurement')
 const JobController = require('./controllers/Job')
 
-log.level('debug')
+if (process.env.NODE_ENV !== 'production') {
+	log.level('debug')
+}
+
 process.on('uncaughtException', (err) => log.error(err))
 
 // Custom responses

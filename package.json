@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Kukua Weather API.",
   "scripts": {
-    "start": "node src/api.js",
+    "start": "node src/server.js",
     "lint": "eslint src/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
