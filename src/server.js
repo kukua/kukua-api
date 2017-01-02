@@ -83,7 +83,7 @@ new UserController(app)
 new DeviceController(app)
 new DeviceGroupController(app)
 new MeasurementController(app)
-new JobController(app)
+new JobController(app, log)
 
 // Error handling
 app.use((req, res, next) => {

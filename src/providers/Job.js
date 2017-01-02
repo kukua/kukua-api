@@ -6,15 +6,17 @@ const db = new Datastore({
 	autoload: true,
 	timestampData: true,
 })
+const { NotFoundError } = require('../helpers/errors')
 const JobModel = require('../models/Job')
 
-db.ensureIndex({ fieldName: 'userId' }, (err) => {
+db.ensureIndex({ fieldName: 'id', unique: true }, (err) => {
 	if (err) throw new Error(err)
 })
 
 const createModel = (job) => {
 	var attr = {
 		id: job.id,
+		data: job.data,
 		created_at: job.createdAt,
 		updated_at: job.updatedAt,
 	}
@@ -22,7 +24,9 @@ const createModel = (job) => {
 	return new JobModel(attr)
 }
 
-module.exports = {
+var methods
+
+module.exports = methods = {
 	find: () => new Promise((resolve, reject) => {
 		db.find({}, (err, jobs) => {
 			if (err) return reject(err)
@@ -30,33 +34,56 @@ module.exports = {
 		})
 	}),
 	findById: (id) => new Promise((resolve, reject) => {
+		if (typeof id !== 'string') return reject('Invalid job key given.')
+
 		db.findOne({ id }, (err, job) => {
 			if (err) return reject(err)
+			if ( ! job) throw new NotFoundError()
 			resolve(createModel(job))
 		})
 	}),
-	update: (id, data) => new Promise((resolve, reject) => {
+	updateById: (id, data) => new Promise((resolve, reject) => {
+		if (typeof id !== 'string') return reject('Invalid job key given.')
+		if (typeof data !== 'object') return reject('Invalid data object given.')
+
 		db.update(
 			{ id },
-			{ $set: {
-				id,
-				data,
-			} },
+			{ id, data },
 			{ upsert: true },
-			(err /*, numReplaced, item*/) => {
+			(err /*, numReplaced, upsert*/) => {
 				if (err) return reject(err)
-				resolve()
+				methods.findById(id).then(resolve, reject)
 			}
 		)
 	}),
-	remove: (id) => new Promise((resolve, reject) => {
+	remove: (job) => new Promise((resolve, reject) => {
+		if ( ! (job instanceof JobModel)) return reject('Invalid Job given.')
+
 		db.remove(
-			{ id },
+			{ id: job.id },
 			{},
 			(err /*, numRemoved*/) => {
 				if (err) return reject(err)
-				resolve()
+				resolve(job)
 			}
 		)
+	}),
+
+	schedule: (job) => new Promise((resolve, reject) => {
+		if ( ! (job instanceof JobModel)) return reject('Invalid Job given.')
+		if (job.isRunning) return resolve()
+
+		job._timer = setInterval(() => job.exec(), 3000)
+		job.setRunning(true)
+		resolve()
+	}),
+	unschedule: (job) => new Promise((resolve, reject) => {
+		if ( ! (job instanceof JobModel)) return reject('Invalid Job given.')
+		if ( ! job.isRunning) return resolve()
+
+		clearInterval(job._timer)
+		delete job._timer
+		job.setRunning(false)
+		resolve()
 	}),
 }

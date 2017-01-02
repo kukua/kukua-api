@@ -9,8 +9,6 @@ module.exports = {
 	findByFilter: (filter) => new Promise((resolve, reject) => {
 		if ( ! (filter instanceof MeasurementFilterModel)) return reject('Invalid measurement filter.')
 
-		//console.log(filter)
-
 		DeviceModel.find({ udid: filter.getUDIDs() }).then((devices) => {
 			return Promise.all(devices.map((device) => device.load('template'))).then(() => {
 				return devices.map((device) => device.get('template').get('attributes'))
