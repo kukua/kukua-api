@@ -1,33 +1,26 @@
-//const User = require('../models/User')
-//const respondWithError = require('./respondWithError')
+const User = require('../models/User')
+const { NotFoundError } = require('./errors')
 
-module.exports = (/*isAdmin = false*/) => (req, res, next) => {
-	next()
-	/*
+const missingHeader = 'No token given. Please provide \'Authorization: Token {token}\' header.'
+
+module.exports = (isAdmin = false) => (req, res, next) => {
 	var header = req.headers.authorization
 
 	if ( ! header || ! header.toLowerCase().startsWith('token ')) {
-		var message = 'No token given. Please supply \'Authorization: Token {token}\' header.'
-		return respondWithError(res, 401, message)
+		return res.status(401).error(missingHeader)
 	}
 
-	User.findOne({
-		where: {
-			auth_token: header.substr(6)
-		},
-	}).then((user) => {
-		if ( ! user) {
-			return respondWithError(res, 401, 'Invalid token.')
-		}
+	User.findByToken(header.substr(6)).then((user) => {
 		if ( ! user.get('is_active')) {
-			return respondWithError(res, 401, 'This account has been disabled.')
+			return res.status(401).error('This account has been disabled.')
 		}
 		if (isAdmin && ! user.get('is_admin')) {
-			return respondWithError(res, 401, 'Not allowed to perform this action.')
+			return res.status(401).error('Not allowed to perform this action.')
 		}
 
 		req.user = user
 		next()
+	}).catch(NotFoundError, () => {
+		res.status(401).error('Invalid token')
 	})
-	*/
 }
