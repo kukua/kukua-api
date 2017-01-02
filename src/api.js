@@ -3,6 +3,7 @@ try { require('dotenv').config() } catch (ex) { /* Do nothing */ }
 require('./models') // Preload models and relations
 
 const express = require('express')
+const bodyParser = require('body-parser')
 const app = express()
 const port = Number(process.env.PORT || 3000)
 const version = require('../package.json').version
@@ -42,7 +43,16 @@ express.response.ok = function (data = {}) {
 }
 
 // Prepare response
+app.use(bodyParser.json({ limit: '100kb' }))
 app.use((req, res, next) => {
+	// Log request
+	var { method, url, query, headers, body } = req
+
+	log.info({
+		type: 'request',
+		version, method, url, query, headers, body
+	})
+
 	// Add Api-Version header
 	res.setHeader('Api-Version', version)
 

@@ -1,4 +1,3 @@
-const bodyParser = require('body-parser')
 const auth = require('../helpers/authenticate')
 const User = require('../models/User')
 const addIncludes = require('../helpers/addIncludes')
@@ -10,7 +9,7 @@ module.exports = class UserController {
 		this._log = log
 
 		app.get('/users/:id(\\d+)', auth(true), this.onShow.bind(this))
-		app.put('/users/:id(\\d+)/config/:configId([\\w\\.]+)', auth(true), bodyParser.json(), this.onUpdate.bind(this))
+		app.put('/users/:id(\\d+)/config/:configId([\\w\\.]+)', auth(true), this.onUpdate.bind(this))
 		app.delete('/users/:id(\\d+)/config/:configId([\\w\\.]+)', auth(true), this.onRemove.bind(this))
 	}
 

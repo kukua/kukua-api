@@ -1,4 +1,5 @@
 const bunyan = require('bunyan')
+const RotatingFileStream = require('bunyan-rotating-file-stream')
 
 module.exports = (name, logPath) => {
 	var log = bunyan.createLogger({
@@ -10,7 +11,11 @@ module.exports = (name, logPath) => {
 			},
 			{
 				level: 'debug',
-				path: logPath,
+				type: 'raw',
+				stream: new RotatingFileStream({
+					path: logPath,
+					period: '1d',
+				}),
 			},
 		]
 	})
