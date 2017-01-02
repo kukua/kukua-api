@@ -2,7 +2,6 @@ const Promise = require('bluebird')
 const auth = require('../helpers/authenticate')
 const Job = require('../models/Job')
 const addIncludes = require('../helpers/addIncludes')
-const { NotFoundError } = require('../helpers/errors')
 
 module.exports = class JobController {
 	constructor (app) {
@@ -13,29 +12,25 @@ module.exports = class JobController {
 	}
 
 	onIndex (req, res) {
-		Job.find().then((jobs) => {
-			return Promise.all(jobs.map((job) => addIncludes(req, job)))
-		}).then((jobs) => {
-			res.json(jobs)
-		}).catch((err) => { res.error(err) })
+		Job.find()
+			.then((jobs) => Promise.all(jobs.map((job) => addIncludes(req, job))))
+			.then((jobs) => res.json(jobs))
+			.catch((err) => res.error(err))
 	}
 	onShow (req, res) {
-		Job.findById(req.params.id).then((job) => {
-			return addIncludes(req, job)
-		}).then((job) => {
-			res.json(job)
-		}).catch(NotFoundError, () => { res.status(404).error('Job not found.')
-		}).catch((err) => { res.error(err) })
+		Job.findById(req.params.id)
+			.then((job) => addIncludes(req, job))
+			.then((job) => res.json(job))
+			.catch((err) => res.error(err))
 	}
 	onUpdate (req, res) {
-		Job.update(req.params.id, req.body).then(() => {
-			res.ok()
-		}).catch((err) => { res.error(err) })
+		Job.update(req.params.id, req.body)
+			.then(() => res.ok())
+			.catch((err) => res.error(err))
 	}
 	onRemove (req, res) {
-		Job.remove(req.params.id).then(() => {
-			res.ok()
-		}).catch(NotFoundError, () => { res.status(404).error('Job not found.')
-		}).catch((err) => { res.error(err) })
+		Job.remove(req.params.id)
+			.then(() => res.ok())
+			.catch((err) => res.error(err))
 	}
 }

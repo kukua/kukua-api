@@ -3,6 +3,7 @@ try { require('dotenv').config() } catch (ex) { /* Do nothing */ }
 require('./models') // Preload models and relations
 
 const express = require('express')
+const addRequestId = require('express-request-id')
 const bodyParser = require('body-parser')
 const app = express()
 const port = Number(process.env.PORT || 3000)
@@ -10,6 +11,7 @@ const version = require('../package.json').version.replace('.0.0', '')
 
 const logPath = String(process.env.LOG_PATH || '/tmp/output.log')
 const log = require('./helpers/log')('api', logPath)
+const { NotFoundError, InternalServerError } = require('./helpers/errors')
 
 const UserController = require('./controllers/User')
 const DeviceController = require('./controllers/Device')
@@ -24,10 +26,14 @@ if (process.env.NODE_ENV !== 'production') {
 process.on('uncaughtException', (err) => log.error(err))
 
 // Custom responses
-express.response.error = function (err = 'Woah! Something went wrong. We have been notified.') {
-	log.error(err)
+express.response.error = function (err) {
+	this.req.log.error(err)
 
 	if (err instanceof Error) {
+		if (err.status) {
+			this.status(err.status)
+		}
+
 		err = err.message
 	}
 	if (this.statusCode === 200) {
@@ -47,12 +53,16 @@ express.response.ok = function (data = {}) {
 }
 
 // Middleware
+app.use(addRequestId())
 app.use(bodyParser.json({ limit: '100kb' }))
 app.use((req, res, next) => {
+	// Attach log
+	req.log = log.child({ rid: req.id })
+
 	// Log request
 	var { method, url, query, headers, body } = req
 
-	log.info({
+	req.log.info({
 		type: 'request',
 		version, method, url, query, headers, body
 	})
@@ -75,11 +85,12 @@ new MeasurementController(app)
 new JobController(app)
 
 app.use((req, res, next) => {
-	res.status(404).error('Not found.')
+	res.error(new NotFoundError())
 	next()
 })
 app.use((err, req, res, next) => {
-	res.status(500).error(err)
+	if ( ! (err instanceof Error)) err = new InternalServerError(err)
+	res.error(err)
 	next()
 })
 

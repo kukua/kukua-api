@@ -64,7 +64,7 @@ module.exports = {
 	find: (options = {}) => new Promise((resolve, reject) => {
 		var where = {}
 
-		if (Array.isArray(options.udid)) {
+		if (Array.isArray(options.udid) && options.udid.length > 0) {
 			where.udid = { $in: options.udid }
 		}
 		if (typeof options.template_id === 'number') {
@@ -80,7 +80,7 @@ module.exports = {
 			},
 		}).then((devices) => {
 			resolve(devices.map((device) => createModel(device)))
-		}).catch((err) => reject(err))
+		}).catch(reject)
 	}),
 	findByUDID: (udid) => new Promise((resolve, reject) => {
 		Device.findOne({
@@ -96,6 +96,6 @@ module.exports = {
 			if ( ! device) throw new NotFoundError()
 
 			resolve(createModel(device))
-		}).catch((err) => reject(err))
+		}).catch(reject)
 	}),
 }

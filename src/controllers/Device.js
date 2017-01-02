@@ -3,7 +3,6 @@ const auth = require('../helpers/authenticate')
 const getRequestedUDIDs = require('../helpers/getRequestedUDIDs')
 const Device = require('../models/Device')
 const addIncludes = require('../helpers/addIncludes')
-const { NotFoundError } = require('../helpers/errors')
 
 module.exports = class DeviceController {
 	constructor (app) {
@@ -12,24 +11,16 @@ module.exports = class DeviceController {
 	}
 
 	onIndex (req, res) {
-		getRequestedUDIDs(req).then((udids) => {
-			if (udids.length > 0) {
-				return Device.find({ udid: udids })
-			}
-
-			return Device.find()
-		}).then((devices) => {
-			return Promise.all(devices.map((device) => addIncludes(req, device)))
-		}).then((devices) => {
-			res.json(devices)
-		}).catch((err) => { res.error(err) })
+		getRequestedUDIDs(req)
+			.then((udids) => Device.find({ udid: udids }))
+			.then((devices) => Promise.all(devices.map((device) => addIncludes(req, device))))
+			.then((devices) => res.json(devices))
+			.catch((err) => res.error(err))
 	}
 	onShow (req, res) {
-		Device.findByUDID(req.params.udid).then((device) => {
-			return addIncludes(req, device)
-		}).then((device) => {
-			res.json(device)
-		}).catch(NotFoundError, () => { res.status(404).error('Device not found.')
-		}).catch((err) => { res.error(err) })
+		Device.findByUDID(req.params.udid)
+			.then((device) => addIncludes(req, device))
+			.then((device) => res.json(device))
+			.catch((err) => res.error(err))
 	}
 }

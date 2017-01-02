@@ -37,7 +37,7 @@ module.exports = {
 			if ( ! user) throw new NotFoundError()
 
 			resolve(createModel(user))
-		}).catch((err) => reject(err))
+		}).catch(reject)
 	}),
 	findByToken: (token) => new Promise((resolve, reject) => {
 		UserToken.findOne({
@@ -52,6 +52,6 @@ module.exports = {
 			if ( ! userToken) throw new NotFoundError()
 
 			resolve(createModel(userToken.get('user')))
-		}).catch((err) => reject(err))
+		}).catch(reject)
 	}),
 }

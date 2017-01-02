@@ -13,11 +13,12 @@ module.exports = class MeasurementController {
 		Promise.all([
 			MeasurementFilter.fromRequest(req),
 			getRequestedUDIDs(req),
-		]).then(([ filter, udids ]) => {
-			filter.setUDIDs(udids)
-			return Measurement.findByFilter(filter)
-		}).then((measurements) => {
-			res.json(measurements)
-		}).catch((err) => { res.error(err) })
+		])
+			.then(([ filter, udids ]) => {
+				filter.setUDIDs(udids)
+				return Measurement.findByFilter(filter)
+			})
+			.then((measurements) => res.json(measurements))
+			.catch((err) => res.error(err))
 	}
 }
