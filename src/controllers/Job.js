@@ -5,9 +5,7 @@ const addIncludes = require('../helpers/addIncludes')
 const { NotFoundError } = require('../helpers/errors')
 
 module.exports = class JobController {
-	constructor (app, log) {
-		this._log = log
-
+	constructor (app) {
 		app.get('/jobs', auth(true), this.onIndex.bind(this))
 		app.get('/jobs/:id([\\w\\.]+)', auth(true), this.onShow.bind(this))
 		app.put('/jobs/:id([\\w\\.]+)', auth(true), this.onUpdate.bind(this))

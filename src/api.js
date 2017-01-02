@@ -65,11 +65,11 @@ app.use((req, res, next) => {
 	next()
 })
 
-new UserController(app, log)
-new DeviceController(app, log)
-new DeviceGroupController(app, log)
-new MeasurementController(app, log)
-new JobController(app, log)
+new UserController(app)
+new DeviceController(app)
+new DeviceGroupController(app)
+new MeasurementController(app)
+new JobController(app)
 
 app.use((req, res, next) => {
 	res.status(404).error('Not found.')

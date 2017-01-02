@@ -5,9 +5,7 @@ const UserConfig = require('../models/UserConfig')
 const { BadRequestError, NotFoundError } = require('../helpers/errors')
 
 module.exports = class UserController {
-	constructor (app, log) {
-		this._log = log
-
+	constructor (app) {
 		app.get('/users/:id(\\d+)', auth(true), this.onShow.bind(this))
 		app.put('/users/:id(\\d+)/config/:configId([\\w\\.]+)', auth(true), this.onUpdate.bind(this))
 		app.delete('/users/:id(\\d+)/config/:configId([\\w\\.]+)', auth(true), this.onRemove.bind(this))

@@ -5,9 +5,7 @@ const getRequestedUDIDs = require('../helpers/getRequestedUDIDs')
 const Measurement = require('../models/Measurement')
 
 module.exports = class MeasurementController {
-	constructor (app, log) {
-		this._log = log
-
+	constructor (app) {
 		app.get('/measurements', auth(), this.onIndex.bind(this))
 	}
 

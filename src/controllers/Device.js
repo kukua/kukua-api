@@ -6,9 +6,7 @@ const addIncludes = require('../helpers/addIncludes')
 const { NotFoundError } = require('../helpers/errors')
 
 module.exports = class DeviceController {
-	constructor (app, log) {
-		this._log = log
-
+	constructor (app) {
 		app.get('/devices', auth(), this.onIndex.bind(this))
 		app.get('/devices/:udid([\\da-fA-F]{16})', auth(), this.onShow.bind(this))
 	}

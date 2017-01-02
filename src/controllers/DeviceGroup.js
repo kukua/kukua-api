@@ -5,9 +5,7 @@ const Device = require('../models/Device')
 const { NotFoundError } = require('../helpers/errors')
 
 module.exports = class DeviceGroupController {
-	constructor (app, log) {
-		this._log = log
-
+	constructor (app) {
 		app.get('/deviceGroups', auth(), this.onIndex.bind(this))
 		app.put('/devices/:udid([\\da-fA-F]{16})/groups/:groupId([\\da-z\\-]+)', auth(), this.onUpdate.bind(this))
 		app.delete('/devices/:udid([\\da-fA-F]{16})/groups/:groupId([\\da-z\\-]+)', auth(), this.onRemove.bind(this))
