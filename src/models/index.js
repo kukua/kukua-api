@@ -27,12 +27,10 @@ Template.setProvider(TemplateProvider)
 Job.setProvider(JobProvider)
 
 User.setRelations(UserConfig)
-User.setRelations(Job)
 UserConfig.setRelations(User)
 DeviceGroup.setRelations(Device)
 Device.setRelations(DeviceGroup, Template)
 Template.setRelations(Device)
-Job.setRelations(User)
 
 module.exports = {
 	Base,
