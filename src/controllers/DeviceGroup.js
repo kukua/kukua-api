@@ -9,7 +9,7 @@ module.exports = class DeviceGroupController {
 		this._log = log
 
 		app.get('/deviceGroups', auth(), this.onIndex.bind(this))
-		app.put('/devices/:udid([\\da-fA-F]{16})/groups/:groupId([\\da-z\\-]+)', auth(), this.onAdd.bind(this))
+		app.put('/devices/:udid([\\da-fA-F]{16})/groups/:groupId([\\da-z\\-]+)', auth(), this.onUpdate.bind(this))
 		app.delete('/devices/:udid([\\da-fA-F]{16})/groups/:groupId([\\da-z\\-]+)', auth(), this.onRemove.bind(this))
 	}
 
@@ -20,7 +20,7 @@ module.exports = class DeviceGroupController {
 			res.json(groups)
 		}).catch((err) => { res.error(err) })
 	}
-	onAdd (req, res) {
+	onUpdate (req, res) {
 		Device.findByUDID(req.params.udid).then((device) => {
 			return DeviceGroup.addDeviceToGroup(device, req.params.groupId)
 		}).then(() => {

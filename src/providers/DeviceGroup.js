@@ -2,7 +2,7 @@ const path = require('path')
 const Promise = require('bluebird')
 const Datastore = require('nedb')
 const db = new Datastore({
-	filename: path.resolve(process.env.GROUPS_DB_PATH),
+	filename: path.resolve(process.env.DEVICE_GROUPS_DB_PATH),
 	autoload: true,
 	timestampData: true,
 })
@@ -19,7 +19,7 @@ const createModel = (group) => {
 	var attr = {
 		id: group.id,
 		name: group.name,
-		device_udids: group.device_udids,
+		device_udids: group.deviceUDIDs,
 		created_at: group.createdAt,
 		updated_at: group.updatedAt,
 	}
@@ -45,7 +45,7 @@ module.exports = {
 	findByDevice: (device) => new Promise((resolve, reject) => {
 		if ( ! (device instanceof DeviceModel)) return reject('Invalid Device given.')
 
-		db.find({ device_udids: device.id }, (err, groups) => {
+		db.find({ deviceUDIDs: device.id }, (err, groups) => {
 			if (err) return reject(err)
 			resolve(groups.map((group) => createModel(group)))
 		})
@@ -56,7 +56,7 @@ module.exports = {
 
 		db.update(
 			{ id: groupId },
-			{ $set: { name: humanize(groupId) }, $addToSet: { device_udids: device.id } },
+			{ $set: { name: humanize(groupId) }, $addToSet: { deviceUDIDs: device.id } },
 			{ upsert: true },
 			(err /*, numReplaced, group*/) => {
 				if (err) return reject(err)
@@ -70,7 +70,7 @@ module.exports = {
 
 		db.update(
 			{ id: groupId },
-			{ $set: { name: humanize(groupId) }, $pull: { device_udids: device.id } },
+			{ $set: { name: humanize(groupId) }, $pull: { deviceUDIDs: device.id } },
 			{ upsert: true },
 			(err /*, numReplaced, group*/) => {
 				if (err) return reject(err)

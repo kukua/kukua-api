@@ -26,7 +26,7 @@ module.exports = class BaseModel {
 
 	load (...relations) {
 		return Promise.all(_.flatten(relations).map((relation) => {
-			var fn = '_load' + classify(relation)
+			var fn = 'load' + classify(relation)
 
 			if (typeof this[fn] !== 'function') {
 				throw new Error('Invalid relation: ' + relation)

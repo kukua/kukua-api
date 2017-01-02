@@ -32,6 +32,13 @@ const createModel = (user) => {
 module.exports = {
 	SequelizeModel: User,
 
+	findById: (id) => new Promise((resolve, reject) => {
+		User.findById(id).then((user) => {
+			if ( ! user) throw new NotFoundError()
+
+			resolve(createModel(user))
+		}).catch((err) => reject(err))
+	}),
 	findByToken: (token) => new Promise((resolve, reject) => {
 		UserToken.findOne({
 			where: {

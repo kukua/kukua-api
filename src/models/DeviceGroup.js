@@ -5,7 +5,7 @@ const mapProviderMethods = require('../helpers/mapProviderMethods')
 var Device
 
 class DeviceGroupModel extends Base {
-	_loadDevices () {
+	loadDevices () {
 		var udids = this.get('device_udids')
 		if ( ! Array.isArray(udids)) udids = []
 

@@ -4,7 +4,7 @@ const mapProviderMethods = require('../helpers/mapProviderMethods')
 var Device
 
 class TemplateModel extends Base {
-	_loadDevices () {
+	loadDevices () {
 		return Device.find({ template_id: this.id }).then((devices) => {
 			this.set('devices', devices)
 		})

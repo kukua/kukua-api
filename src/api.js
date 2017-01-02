@@ -10,6 +10,7 @@ const version = require('../package.json').version
 const logPath = String(process.env.LOG_PATH || '/tmp/output.log')
 const log = require('./helpers/log')('api', logPath)
 
+const UserController = require('./controllers/User')
 const DeviceController = require('./controllers/Device')
 const DeviceGroupController = require('./controllers/DeviceGroup')
 const MeasurementController = require('./controllers/Measurement')
@@ -53,6 +54,7 @@ app.use((req, res, next) => {
 	next()
 })
 
+new UserController(app, log)
 new DeviceController(app, log)
 new DeviceGroupController(app, log)
 new MeasurementController(app, log)

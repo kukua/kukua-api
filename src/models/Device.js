@@ -8,12 +8,12 @@ class DeviceModel extends Base {
 		return this.get('udid')
 	}
 
-	_loadGroups () {
+	loadGroups () {
 		return DeviceGroup.findByDevice(this).then((groups) => {
 			this.set('groups', groups)
 		})
 	}
-	_loadTemplate () {
+	loadTemplate () {
 		return Template.findByDevice(this).then((template) => {
 			this.set('template', template)
 		})

@@ -31,7 +31,7 @@ module.exports = class DeviceController {
 			return addIncludes(req, device)
 		}).then((device) => {
 			res.json(device)
-		}).catch(NotFoundError, () => { res.status(404).error('Device not found')
+		}).catch(NotFoundError, () => { res.status(404).error('Device not found.')
 		}).catch((err) => { res.error(err) })
 	}
 }
