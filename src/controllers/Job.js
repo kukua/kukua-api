@@ -47,21 +47,20 @@ module.exports = class JobController {
 
 	start () {
 		return Job.find()
-			.then((jobs) => Promise.all(jobs.map((job) => job.start())))
+			.then((jobs) => Promise.all(jobs.map((job) => this._startJob(job))))
 			.then((jobs) => {
 				this._jobs = jobs
 				return jobs
 			})
 	}
 	stop () {
-		return Promise.all(this._jobs.map((job) => job.stop()))
+		return Promise.all(this._jobs.map((job) => this._stopJob(job)))
 	}
 	update (job) {
 		return this.remove(job)
-			.then(() => job.start())
+			.then(() => this._startJob(job))
 			.then(() => {
 				this._jobs.push(job)
-				this._log.info({ job_id: job.id }, `Started job ${job.id}.`)
 				return job
 			})
 	}
@@ -70,11 +69,28 @@ module.exports = class JobController {
 
 		if ( ! runningJob) return Promise.resolve(job)
 
-		return runningJob.stop()
+		return this._stopJob(runningJob)
 			.then(() => {
 				this._jobs = _.without(this._jobs, runningJob)
-				this._log.info({ job_id: job.id }, `Stopped job ${job.id}.`)
 				return job
 			})
+	}
+	_startJob (job) {
+		return job.start().then(() => {
+			this._log.info({
+				job_id: job.id,
+				is_running: job.isRunning,
+			}, `Started job ${job.id}.`)
+			return job
+		})
+	}
+	_stopJob (job) {
+		return job.stop().then(() => {
+			this._log.info({
+				job_id: job.id,
+				is_running: job.isRunning,
+			}, `Stopped job ${job.id}.`)
+			return job
+		})
 	}
 }
