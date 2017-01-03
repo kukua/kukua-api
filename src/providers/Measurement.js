@@ -68,7 +68,7 @@ module.exports = {
 				GROUP BY UNIX_TIMESTAMP(timestamp) - UNIX_TIMESTAMP(timestamp) % ${filter.getInterval()}
 				${order}
 				${limit}
-			`
+			`.replace(/\t/g, '')
 
 			sequelize.query(sql, { type: sequelize.QueryTypes.SELECT }).then((results) => {
 				resolve(createResponse(filter, columns, _.map(results, (result) => _.values(result))))

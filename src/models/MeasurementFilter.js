@@ -41,6 +41,7 @@ class MeasurementFilterModel {
 		return getAllUDIDs(this.getDeviceGroups(), this.getUDIDs())
 	}
 	addField (name, aggregator = 'avg') {
+		if (name === 'timestamp') aggregator = 'max'
 		if (aggregators.indexOf(aggregator) === -1) throw new Error('Invalid aggregator.')
 
 		this._fields.push({ name, aggregator })
