@@ -38,7 +38,7 @@ module.exports = methods = {
 
 		db.findOne({ id }, (err, job) => {
 			if (err) return reject(err)
-			if ( ! job) throw new NotFoundError()
+			if ( ! job) return reject(new NotFoundError())
 			resolve(createModel(job))
 		})
 	}),
