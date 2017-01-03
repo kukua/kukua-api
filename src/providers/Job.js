@@ -8,6 +8,7 @@ const db = new Datastore({
 })
 const { BadRequestError, NotFoundError } = require('../helpers/errors')
 const JobModel = require('../models/Job')
+const JobScheduler = require('./JobScheduler')
 
 db.ensureIndex({ fieldName: 'id', unique: true }, (err) => {
 	if (err) throw new Error(err)
@@ -81,21 +82,7 @@ module.exports = methods = {
 		)
 	}),
 
-	schedule: (job) => new Promise((resolve, reject) => {
-		if ( ! (job instanceof JobModel)) return reject('Invalid Job given.')
-		if (job.isRunning) return resolve()
-
-		//job._timer = setInterval(() => job.exec(), 3000)
-		job.setRunning(true)
-		resolve()
-	}),
-	unschedule: (job) => new Promise((resolve, reject) => {
-		if ( ! (job instanceof JobModel)) return reject('Invalid Job given.')
-		if ( ! job.isRunning) return resolve()
-
-		//clearInterval(job._timer)
-		//delete job._timer
-		job.setRunning(false)
-		resolve()
-	}),
+	isRunning: (job) => JobScheduler.isRunning(job),
+	schedule: (job) => JobScheduler.schedule(job),
+	unschedule: (job) => JobScheduler.unschedule(job),
 }

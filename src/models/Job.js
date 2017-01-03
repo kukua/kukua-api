@@ -5,7 +5,6 @@ const mapProviderMethods = require('../helpers/mapProviderMethods')
 class JobModel extends Base {
 	constructor (attributes) {
 		super(attributes)
-		this._running = false
 	}
 
 	getSchema () {
@@ -22,6 +21,8 @@ class JobModel extends Base {
 				).required(),
 			}).required(),
 			throttle_period: joi.duration(),
+			created_at: joi.date().iso(),
+			updated_at: joi.date().iso(),
 		})
 	}
 	validate () {
@@ -29,10 +30,7 @@ class JobModel extends Base {
 	}
 
 	get isRunning () {
-		return this._running
-	}
-	setRunning (running) {
-		this._running = !! running
+		return JobModel.isRunning(this)
 	}
 
 	start () {
