@@ -10,14 +10,12 @@ module.exports = class MeasurementController {
 	}
 
 	onIndex (req, res) {
-		Promise.all([
-			MeasurementFilter.fromRequest(req),
-			getRequestedUDIDs(req),
-		])
-			.then(([ filter, udids ]) => {
-				filter.setUDIDs(udids)
-				return Measurement.findByFilter(filter)
-			})
+		Promise.all([ MeasurementFilter.fromRequest(req), getRequestedUDIDs(req) ])
+			.then(([ filter, { udids, deviceGroups } ]) => filter
+				.setUDIDs(udids)
+				.setDeviceGroups(deviceGroups)
+			)
+			.then((filter) => Measurement.findByFilter(filter))
 			.then((measurements) => res.json(measurements))
 			.catch((err) => res.error(err))
 	}

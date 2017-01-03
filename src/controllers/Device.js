@@ -3,6 +3,7 @@ const auth = require('../helpers/authenticate')
 const getRequestedUDIDs = require('../helpers/getRequestedUDIDs')
 const Device = require('../models/Device')
 const addIncludes = require('../helpers/addIncludes')
+const getAllUDIDs = require('../helpers/getAllUDIDs')
 
 module.exports = class DeviceController {
 	constructor (app) {
@@ -12,7 +13,11 @@ module.exports = class DeviceController {
 
 	onIndex (req, res) {
 		getRequestedUDIDs(req)
-			.then((udids) => Device.find({ udid: udids }))
+			.then(({ udids, deviceGroups }) => {
+				udids = getAllUDIDs(deviceGroups, udids)
+				if (udids.length > 0) return Device.find({ udid: udids })
+				return Device.find()
+			})
 			.then((devices) => Promise.all(devices.map((device) => addIncludes(req, device))))
 			.then((devices) => res.json(devices))
 			.catch((err) => res.error(err))

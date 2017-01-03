@@ -5,11 +5,23 @@ const DeviceModel = require('../models/Device')
 const fields = require('../config/fields')
 const sequelize = require('../helpers/sequelize')('measurements')
 
+const createResponse = (filter, columns, values) => ({
+	filter,
+	columns,
+	values,
+})
+
 module.exports = {
 	findByFilter: (filter) => new Promise((resolve, reject) => {
 		if ( ! (filter instanceof MeasurementFilterModel)) return reject('Invalid measurement filter.')
 
-		DeviceModel.find({ udid: filter.getUDIDs() }).then((devices) => {
+		var udids = filter.getAllUDIDs()
+
+		if (udids.length === 0) {
+			return resolve(createResponse(filter, [], []))
+		}
+
+		DeviceModel.find({ udid: udids }).then((devices) => {
 			return Promise.all(devices.map((device) => device.load('template'))).then(() => {
 				return devices.map((device) => device.get('template').get('attributes'))
 			}, reject)
@@ -46,7 +58,7 @@ module.exports = {
 
 			var limit = (filter.getLimit() ? `LIMIT ${filter.getLimit()}` : '')
 
-			var from = filter.getUDIDs().map((udid) => (
+			var from = udids.map((udid) => (
 				`(SELECT \`${columns.join('`, `')}\` FROM \`${udid}\` WHERE ${where})`
 			)).join('UNION')
 
@@ -59,11 +71,7 @@ module.exports = {
 			`
 
 			sequelize.query(sql, { type: sequelize.QueryTypes.SELECT }).then((results) => {
-				resolve({
-					filter,
-					columns,
-					values: _.map(results, (result) => _.values(result)),
-				})
+				resolve(createResponse(filter, columns, _.map(results, (result) => _.values(result))))
 			})
 		}).catch(reject)
 	}),

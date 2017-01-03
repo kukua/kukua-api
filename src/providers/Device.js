@@ -64,7 +64,7 @@ module.exports = {
 	find: (options = {}) => new Promise((resolve, reject) => {
 		var where = {}
 
-		if (Array.isArray(options.udid) && options.udid.length > 0) {
+		if (Array.isArray(options.udid)) {
 			where.udid = { $in: options.udid }
 		}
 		if (typeof options.template_id === 'number') {

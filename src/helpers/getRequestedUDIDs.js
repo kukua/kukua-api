@@ -10,20 +10,12 @@ module.exports = (req) => {
 		.filter((udid) => udid.match(/^[a-f0-9]{16}$/)) // Also removes empty value (''.split(',') => [''])
 
 	// &groups=country1,country2,...
-	var groups = req.query.groups
+	var groups = _.chain((req.query.groups || '').split(',')).compact().uniq().value()
 
-	if (groups) {
-		return Promise.all(groups.split(',').map((groupId) => DeviceGroup.findById(groupId)))
-			.then((results) => {
-				return _.uniq(
-					_.chain(results)
-						.map(([ group ]) => group.get('device_udids'))
-						.flatten()
-						.value()
-						.concat(udids) // Add other
-				)
-			})
+	if (groups.length > 0) {
+		return Promise.all(groups.map((id) => DeviceGroup.findById(id)))
+			.then((groups) => ({ udids, deviceGroups: _.flatten(groups) }))
 	} else {
-		return Promise.resolve(udids)
+		return Promise.resolve({ udids, deviceGroups: [] })
 	}
 }

@@ -33,6 +33,7 @@ module.exports = {
 	findByDevice: (device) => new Promise((resolve, reject) => {
 		if ( ! (device instanceof DeviceModel)) return reject('Invalid Device given.')
 
+		// TODO(mauvm): Cache
 		Template.findById(device.get('template_id'), {
 			include: {
 				model: Attribute,

@@ -1,11 +1,13 @@
 const moment = require('moment-timezone')
 const mapProviderMethods = require('../helpers/mapProviderMethods')
+const getAllUDIDs = require('../helpers/getAllUDIDs')
 
 const aggregators = ['sum', 'avg', 'min', 'max']
 
 class MeasurementFilterModel {
 	constructor () {
 		this._udids = []
+		this._deviceGroups = []
 		this._fields = []
 		this._interval = null
 		this._from = null
@@ -15,15 +17,25 @@ class MeasurementFilterModel {
 	}
 
 	setUDIDs (udids) {
-		if ( ! Array.isArray(udids)) {
-			throw new Error('Invalid UDIDs.')
-		}
+		if ( ! Array.isArray(udids)) throw new Error('Invalid UDIDs.')
 
 		this._udids = udids
 		return this
 	}
 	getUDIDs () {
 		return this._udids
+	}
+	setDeviceGroups (groups) {
+		if ( ! Array.isArray(groups)) throw new Error('Invalid device groups.')
+
+		this._deviceGroups = groups
+		return this
+	}
+	getDeviceGroups () {
+		return this._deviceGroups
+	}
+	getAllUDIDs () {
+		return getAllUDIDs(this.getDeviceGroups(), this.getUDIDs())
 	}
 	addField (name, aggregator = 'avg') {
 		if (aggregators.indexOf(aggregator) === -1) throw new Error('Invalid aggregator.')
@@ -92,6 +104,8 @@ class MeasurementFilterModel {
 	toJSON () {
 		return {
 			udids: this.getUDIDs(),
+			device_groups: this.getDeviceGroups().map((group) => group.id),
+			all_udids: this.getAllUDIDs(),
 			fields: this.getFields(),
 			interval: this.getInterval(),
 			from: this.getFrom().toISOString(),
