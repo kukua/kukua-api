@@ -42,4 +42,8 @@ log.error = (data, err) => {
 	logError(data, err.message)
 }
 
+if (process.env.NODE_ENV !== 'production') {
+	log.level('debug')
+}
+
 module.exports = log

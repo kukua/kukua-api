@@ -10,6 +10,8 @@ const port = Number(process.env.PORT || 3000)
 const version = require('../package.json').version.replace('.0.0', '')
 
 const log = require('./helpers/log')
+process.on('uncaughtException', (err) => log.error(err))
+
 const { NotFoundError, InternalServerError } = require('./helpers/errors')
 
 const UserController = require('./controllers/User')
@@ -17,12 +19,6 @@ const DeviceController = require('./controllers/Device')
 const DeviceGroupController = require('./controllers/DeviceGroup')
 const MeasurementController = require('./controllers/Measurement')
 const JobController = require('./controllers/Job')
-
-if (process.env.NODE_ENV !== 'production') {
-	log.level('debug')
-}
-
-process.on('uncaughtException', (err) => log.error(err))
 
 // Custom responses
 express.response.error = function (err) {
