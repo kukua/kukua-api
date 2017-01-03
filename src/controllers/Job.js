@@ -9,6 +9,7 @@ module.exports = class JobController {
 	constructor (app) {
 		app.get('/jobs', auth(true), this.onIndex.bind(this))
 		app.get('/jobs/:id([\\w\\.]+)', auth(true), this.onShow.bind(this))
+		app.post('/jobs/:id([\\w\\.]+)/trigger', auth(true), this.onTrigger.bind(this))
 		app.put('/jobs/:id([\\w\\.]+)', auth(true), this.onUpdate.bind(this))
 		app.delete('/jobs/:id([\\w\\.]+)', auth(true), this.onRemove.bind(this))
 
@@ -28,6 +29,12 @@ module.exports = class JobController {
 		Job.findById(req.params.id)
 			.then((job) => addIncludes(req, job))
 			.then((job) => res.json(job))
+			.catch((err) => res.error(err))
+	}
+	onTrigger (req, res) {
+		Job.findById(req.params.id)
+			.then((job) => job.exec())
+			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
 	onUpdate (req, res) {

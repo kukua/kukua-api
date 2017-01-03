@@ -22,5 +22,6 @@ DELETE /users/2/config/test
 
 GET /jobs
 PUT /jobs/job-name { "filter": ... }
+POST /jobs/job-name/trigger # Trigger manually
 DELETE /jobs/job-name
 ```

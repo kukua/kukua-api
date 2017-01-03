@@ -1,3 +1,4 @@
+const Promise = require('bluebird')
 const Base = require('./Base')
 const joi = require('../helpers/jobJoi')
 const mapProviderMethods = require('../helpers/mapProviderMethods')
@@ -41,6 +42,7 @@ class JobModel extends Base {
 	}
 	exec () {
 		console.log('exec', this.id)
+		return Promise.resolve()
 	}
 }
 
