@@ -1,13 +1,12 @@
 const Promise = require('bluebird')
 const _ = require('underscore')
 const auth = require('../helpers/authenticate')
+const log = require('../helpers/log').child({ type: 'jobs' })
 const Job = require('../models/Job')
 const addIncludes = require('../helpers/addIncludes')
 
 module.exports = class JobController {
-	constructor (app, log) {
-		this._log = log.child({ type: 'jobs' })
-
+	constructor (app) {
 		app.get('/jobs', auth(true), this.onIndex.bind(this))
 		app.get('/jobs/:id([\\w\\.]+)', auth(true), this.onShow.bind(this))
 		app.put('/jobs/:id([\\w\\.]+)', auth(true), this.onUpdate.bind(this))
@@ -15,7 +14,7 @@ module.exports = class JobController {
 
 		this._jobs = []
 		this.start().then((jobs) => {
-			this._log.info({ job_ids: _.pluck(jobs, 'id') }, `Started all ${jobs.length} jobs.`)
+			log.info({ job_ids: _.pluck(jobs, 'id') }, `Started all ${jobs.length} jobs.`)
 		})
 	}
 
@@ -77,7 +76,7 @@ module.exports = class JobController {
 	}
 	_startJob (job) {
 		return job.start().then(() => {
-			this._log.info({
+			log.info({
 				job_id: job.id,
 				is_running: job.isRunning,
 			}, `Started job ${job.id}.`)
@@ -86,7 +85,7 @@ module.exports = class JobController {
 	}
 	_stopJob (job) {
 		return job.stop().then(() => {
-			this._log.info({
+			log.info({
 				job_id: job.id,
 				is_running: job.isRunning,
 			}, `Stopped job ${job.id}.`)

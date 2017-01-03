@@ -9,8 +9,7 @@ const app = express()
 const port = Number(process.env.PORT || 3000)
 const version = require('../package.json').version.replace('.0.0', '')
 
-const logPath = String(process.env.LOG_PATH || '/tmp/output.log')
-const log = require('./helpers/log')('api', logPath)
+const log = require('./helpers/log')
 const { NotFoundError, InternalServerError } = require('./helpers/errors')
 
 const UserController = require('./controllers/User')
@@ -86,7 +85,7 @@ new UserController(app)
 new DeviceController(app)
 new DeviceGroupController(app)
 new MeasurementController(app)
-new JobController(app, log)
+new JobController(app)
 
 // Error handling
 app.use((req, res, next) => {
