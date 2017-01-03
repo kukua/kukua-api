@@ -1,8 +1,11 @@
+const Promise = require('bluebird')
 const moment = require('moment-timezone')
 const mapProviderMethods = require('../helpers/mapProviderMethods')
 const getAllUDIDs = require('../helpers/getAllUDIDs')
 
 const aggregators = ['sum', 'avg', 'min', 'max']
+
+var DeviceGroup
 
 class MeasurementFilterModel {
 	constructor () {
@@ -101,6 +104,12 @@ class MeasurementFilterModel {
 		return this._limit
 	}
 
+	serialize () {
+		var data = this.toJSON()
+		delete data.all_udids
+		return JSON.stringify(data)
+	}
+
 	toJSON () {
 		return {
 			udids: this.getUDIDs(),
@@ -116,9 +125,27 @@ class MeasurementFilterModel {
 	}
 }
 
+MeasurementFilterModel.unserialize = (json) => {
+	var data = JSON.parse(json)
+	var filter = new MeasurementFilterModel()
+
+	filter.setUDIDs(data.udids)
+	filter.setFields(data.fields)
+	filter.setInterval(data.interval)
+	filter.setFrom(moment.utc(data.from))
+	filter.setTo(moment.utc(data.to))
+	data.sort.map(({ name, order }) => filter.addSort(name, order))
+	filter.setLimit(data.limit)
+
+	return Promise.all(data.device_groups.map((id) => DeviceGroup.findById(id)))
+		.then((groups) => filter.setDeviceGroups(groups))
+}
+
 MeasurementFilterModel.setProvider = (MeasurementFilterProvider) => {
 	mapProviderMethods(MeasurementFilterModel, MeasurementFilterProvider)
 }
-//MeasurementFilterModel.setRelations = () => {}
+MeasurementFilterModel.setRelations = (DeviceGroupModel) => {
+	DeviceGroup = DeviceGroupModel
+}
 
 module.exports = MeasurementFilterModel

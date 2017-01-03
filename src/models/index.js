@@ -30,6 +30,7 @@ User.setRelations(UserConfig)
 UserConfig.setRelations(User)
 DeviceGroup.setRelations(Device)
 Device.setRelations(DeviceGroup, Template)
+MeasurementFilter.setRelations(DeviceGroup)
 Template.setRelations(Device)
 
 module.exports = {
