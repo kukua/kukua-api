@@ -34,12 +34,12 @@ module.exports = {
 			resolve(groups.map((group) => createModel(group)))
 		})
 	}),
-	findById: (groupId) => new Promise((resolve, reject) => {
-		if (slugify(groupId) !== groupId) return reject('Invalid groupId given (lowercase slug required).')
+	findById: (id) => new Promise((resolve, reject) => {
+		if (slugify(id) !== id) return reject('Invalid group ID given (lowercase slug required).')
 
-		db.find({ id: groupId }).sort({ name: 1 }).exec((err, groups) => {
+		db.findOne({ id }).sort({ name: 1 }).exec((err, group) => {
 			if (err) return reject(err)
-			resolve(groups.map((group) => createModel(group)))
+			resolve(createModel(group))
 		})
 	}),
 	findByDevice: (device) => new Promise((resolve, reject) => {
@@ -50,13 +50,13 @@ module.exports = {
 			resolve(groups.map((group) => createModel(group)))
 		})
 	}),
-	addDeviceToGroup: (device, groupId) => new Promise((resolve, reject) => {
+	addDeviceToGroup: (device, id) => new Promise((resolve, reject) => {
 		if ( ! (device instanceof DeviceModel)) return reject('Invalid Device given.')
-		if (slugify(groupId) !== groupId) return reject('Invalid groupId given (lowercase slug required).')
+		if (slugify(id) !== id) return reject('Invalid group ID given (lowercase slug required).')
 
 		db.update(
-			{ id: groupId },
-			{ $set: { name: humanize(groupId) }, $addToSet: { deviceUDIDs: device.id } },
+			{ id },
+			{ $set: { name: humanize(id) }, $addToSet: { deviceUDIDs: device.id } },
 			{ upsert: true },
 			(err /*, numReplaced, group*/) => {
 				if (err) return reject(err)
@@ -64,13 +64,13 @@ module.exports = {
 			}
 		)
 	}),
-	removeDeviceFromGroup: (device, groupId) => new Promise((resolve, reject) => {
+	removeDeviceFromGroup: (device, id) => new Promise((resolve, reject) => {
 		if ( ! (device instanceof DeviceModel)) return reject('Invalid Device given.')
-		if (slugify(groupId) !== groupId) return reject('Invalid groupId given (lowercase slug required).')
+		if (slugify(id) !== id) return reject('Invalid group ID given (lowercase slug required).')
 
 		db.update(
-			{ id: groupId },
-			{ $set: { name: humanize(groupId) }, $pull: { deviceUDIDs: device.id } },
+			{ id },
+			{ $set: { name: humanize(id) }, $pull: { deviceUDIDs: device.id } },
 			{ upsert: true },
 			(err /*, numReplaced, group*/) => {
 				if (err) return reject(err)

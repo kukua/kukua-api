@@ -14,7 +14,7 @@ module.exports = (req) => {
 
 	if (groups.length > 0) {
 		return Promise.all(groups.map((id) => DeviceGroup.findById(id)))
-			.then((groups) => ({ udids, deviceGroups: _.flatten(groups) }))
+			.then((deviceGroups) => ({ udids, deviceGroups }))
 	} else {
 		return Promise.resolve({ udids, deviceGroups: [] })
 	}
