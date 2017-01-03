@@ -1,4 +1,6 @@
+const path = require('path')
 const bunyan = require('bunyan')
+const bunyanDebugStream = require('bunyan-debug-stream')
 const RotatingFileStream = require('bunyan-rotating-file-stream')
 
 const logPath = String(process.env.LOG_PATH || '/tmp/output.log')
@@ -8,7 +10,11 @@ var log = bunyan.createLogger({
 	streams: [
 		{
 			level: 'info',
-			stream: process.stdout,
+			type: 'raw',
+			stream: bunyanDebugStream({
+				basepath: path.resolve('.'),
+				forceColor: true,
+			}),
 		},
 		{
 			level: 'debug',
