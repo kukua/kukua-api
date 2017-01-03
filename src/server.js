@@ -70,7 +70,10 @@ app.use((req, res, next) => {
 	// Add Api-Version header
 	res.setHeader('X-Api-Version', version)
 
-	// Check Accept header
+	// Check headers
+	if (req.headers['content-length'] > 0 && req.headers['content-type'] !== 'application/json') {
+		return res.status(400).error('Content type must be application/json.')
+	}
 	if ( ! req.accepts('json')) {
 		return res.status(400).error('Request does not accept JSON response.')
 	}

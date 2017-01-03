@@ -21,4 +21,6 @@ PUT /users/2/config/test {"value":{"a":1,"b":2}}
 DELETE /users/2/config/test
 
 GET /jobs
+PUT /jobs/job-name { "filter": ... }
+DELETE /jobs/job-name
 ```
