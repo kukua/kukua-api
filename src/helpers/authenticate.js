@@ -18,6 +18,7 @@ module.exports = (isAdmin = false) => (req, res, next) => {
 			return res.status(401).error('Not allowed to perform this action.')
 		}
 
+		res.setHeader('X-User-Id', user.id)
 		req.user = user
 		next()
 	}).catch(NotFoundError, () => {

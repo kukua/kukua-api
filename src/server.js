@@ -68,7 +68,7 @@ app.use((req, res, next) => {
 	})
 
 	// Add Api-Version header
-	res.setHeader('Api-Version', version)
+	res.setHeader('X-Api-Version', version)
 
 	// Check Accept header
 	if ( ! req.accepts('json')) {
