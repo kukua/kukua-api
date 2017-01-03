@@ -15,7 +15,15 @@ module.exports = class JobController {
 
 		this._jobs = []
 		this.start().then((jobs) => {
-			log.info({ job_ids: _.pluck(jobs, 'id') }, `Started all ${jobs.length} jobs.`)
+			var level = 'info'
+			var description = `all ${jobs.length}`
+
+			if (this._jobs.length !== jobs.length) {
+				level = 'warn'
+				description = `${this._jobs.length}/${jobs.length}`
+			}
+
+			log[level]({ job_ids: _.pluck(this._jobs, 'id') }, `Started ${description} jobs.`)
 		})
 	}
 
@@ -52,11 +60,15 @@ module.exports = class JobController {
 	}
 
 	start () {
+		var allJobs
 		return Job.find()
-			.then((jobs) => Promise.all(jobs.map((job) => this._startJob(job))))
 			.then((jobs) => {
-				this._jobs = jobs
-				return jobs
+				allJobs = jobs
+				return Promise.all(jobs.map((job) => this._startJob(job)))
+			})
+			.then((jobs) => {
+				this._jobs = _.compact(jobs)
+				return allJobs
 			})
 	}
 	stop () {
@@ -87,6 +99,11 @@ module.exports = class JobController {
 				is_running: job.isRunning,
 			}, `Started job ${job.id}.`)
 			return job
+		}).catch((err) => {
+			log.error({
+				job_id: job.id,
+				is_running: job.isRunning,
+			}, err)
 		})
 	}
 	_stopJob (job) {
