@@ -68,11 +68,10 @@ module.exports = class JobController {
 
 		if ( ! runningJob) return Promise.resolve(job)
 
-		return this._stopJob(runningJob)
-			.then(() => {
-				this._jobs = _.without(this._jobs, runningJob)
-				return job
-			})
+		return this._stopJob(runningJob).then(() => {
+			this._jobs = _.without(this._jobs, runningJob)
+			return job
+		})
 	}
 	_startJob (job) {
 		return job.start().then(() => {

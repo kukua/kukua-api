@@ -25,6 +25,9 @@
 		"no-console": [
 			0
 		],
+		"no-ex-assign": [
+		    0
+		],
 		"react/no-unknown-property": [
 			0
 		]

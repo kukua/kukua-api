@@ -1,4 +1,5 @@
 const Base = require('./Base')
+const joi = require('../helpers/jobJoi')
 const mapProviderMethods = require('../helpers/mapProviderMethods')
 
 class JobModel extends Base {
@@ -7,6 +8,25 @@ class JobModel extends Base {
 		this._running = false
 	}
 
+	getSchema () {
+		return joi.object().keys({
+			id: joi.string().required(),
+			trigger: joi.object().keys({
+				schedule: joi.alternatives().try(
+					joi.object().keys({
+						interval: joi.duration().required(),
+					}),
+					joi.object().keys({
+						cron: joi.cron().required(),
+					})
+				).required(),
+			}).required(),
+			throttle_period: joi.duration(),
+		})
+	}
+	validate () {
+		joi.assert(this.get(), this.getSchema())
+	}
 
 	get isRunning () {
 		return this._running
@@ -22,7 +42,7 @@ class JobModel extends Base {
 		return JobModel.unschedule(this).then(() => this)
 	}
 	exec () {
-		console.log('exec', this)
+		console.log('exec', this.id)
 	}
 }
 

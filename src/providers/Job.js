@@ -6,7 +6,7 @@ const db = new Datastore({
 	autoload: true,
 	timestampData: true,
 })
-const { NotFoundError } = require('../helpers/errors')
+const { BadRequestError, NotFoundError } = require('../helpers/errors')
 const JobModel = require('../models/Job')
 
 db.ensureIndex({ fieldName: 'id', unique: true }, (err) => {
@@ -14,14 +14,14 @@ db.ensureIndex({ fieldName: 'id', unique: true }, (err) => {
 })
 
 const createModel = (job) => {
-	var attr = {
-		id: job.id,
-		data: job.data,
-		created_at: job.createdAt,
-		updated_at: job.updatedAt,
-	}
+	job.created_at = job.createdAt
+	job.updated_at = job.updatedAt
 
-	return new JobModel(attr)
+	delete job._id
+	delete job.createdAt
+	delete job.updatedAt
+
+	return new JobModel(job)
 }
 
 var methods
@@ -46,9 +46,21 @@ module.exports = methods = {
 		if (typeof id !== 'string') return reject('Invalid job key given.')
 		if (typeof data !== 'object') return reject('Invalid data object given.')
 
+		data.id = id
+		var job = new JobModel(data)
+
+		try {
+			job.validate()
+		} catch (err) {
+			if (err.isJoi) {
+				err = new BadRequestError(`Validation failed: ${err.details[0].message}.`)
+			}
+			return reject(err)
+		}
+
 		db.update(
 			{ id },
-			{ id, data },
+			job.toJSON(),
 			{ upsert: true },
 			(err /*, numReplaced, upsert*/) => {
 				if (err) return reject(err)
@@ -73,7 +85,7 @@ module.exports = methods = {
 		if ( ! (job instanceof JobModel)) return reject('Invalid Job given.')
 		if (job.isRunning) return resolve()
 
-		job._timer = setInterval(() => job.exec(), 3000)
+		//job._timer = setInterval(() => job.exec(), 3000)
 		job.setRunning(true)
 		resolve()
 	}),
@@ -81,8 +93,8 @@ module.exports = methods = {
 		if ( ! (job instanceof JobModel)) return reject('Invalid Job given.')
 		if ( ! job.isRunning) return resolve()
 
-		clearInterval(job._timer)
-		delete job._timer
+		//clearInterval(job._timer)
+		//delete job._timer
 		job.setRunning(false)
 		resolve()
 	}),
