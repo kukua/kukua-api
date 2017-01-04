@@ -127,19 +127,23 @@ class MeasurementFilterModel {
 }
 
 MeasurementFilterModel.unserialize = (json) => {
-	var data = JSON.parse(json)
-	var filter = new MeasurementFilterModel()
+	try {
+		var data = (typeof json === 'object' ? json : JSON.parse(json))
+		var filter = new MeasurementFilterModel()
 
-	filter.setUDIDs(data.udids)
-	filter.setFields(data.fields)
-	filter.setInterval(data.interval)
-	filter.setFrom(moment.utc(data.from))
-	filter.setTo(moment.utc(data.to))
-	data.sort.map(({ name, order }) => filter.addSort(name, order))
-	filter.setLimit(data.limit)
+		filter.setUDIDs(data.udids)
+		data.fields.map(({ name, aggregator }) => filter.addField(name, aggregator))
+		filter.setInterval(data.interval)
+		if (data.from) filter.setFrom(moment.utc(data.from))
+		if (data.to) filter.setTo(moment.utc(data.to))
+		data.sort.map(({ name, order }) => filter.addSort(name, order))
+		filter.setLimit(data.limit)
 
-	return Promise.all(data.device_groups.map((id) => DeviceGroup.findById(id)))
-		.then((groups) => filter.setDeviceGroups(groups))
+		return Promise.all(data.device_groups.map((id) => DeviceGroup.findById(id)))
+			.then((groups) => filter.setDeviceGroups(groups))
+	} catch (err) {
+		return Promise.reject(err)
+	}
 }
 
 MeasurementFilterModel.setProvider = (MeasurementFilterProvider) => {

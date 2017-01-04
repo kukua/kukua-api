@@ -50,7 +50,12 @@ module.exports = {
 				selects.push(fields[name](filter, aggregator))
 			})
 
-			var where = `timestamp >= '${filter.getFrom().toISOString()}' AND timestamp <= '${filter.getTo().toISOString()}'`
+			var from = filter.getFrom()
+			var to = filter.getTo()
+			var where = ''
+			if (from) where += `timestamp >= '${from.toISOString()}'`
+			if (to) where += `${where ? ' AND ' : ''} timestamp <= '${to.toISOString()}'`
+			if (where) where = 'WHERE ' + where
 
 			var order = ''
 			var sorting = filter.getSorting().map(({ name, order }) => `\`${name}\` ${order > 0 ? 'ASC' : 'DESC'}`)
@@ -58,13 +63,13 @@ module.exports = {
 
 			var limit = (filter.getLimit() ? `LIMIT ${filter.getLimit()}` : '')
 
-			var from = udids.map((udid) => (
-				`(SELECT \`${columns.join('`, `')}\` FROM \`${udid}\` WHERE ${where})`
+			var tables = udids.map((udid) => (
+				`(SELECT \`${columns.join('`, `')}\` FROM \`${udid}\` ${where})`
 			)).join('UNION')
 
 			var sql = `
 				SELECT ${selects.join(', ')}
-				FROM (${from}) AS t
+				FROM (${tables}) AS t
 				GROUP BY UNIX_TIMESTAMP(timestamp) - UNIX_TIMESTAMP(timestamp) % ${filter.getInterval()}
 				${order}
 				${limit}

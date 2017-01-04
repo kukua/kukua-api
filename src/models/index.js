@@ -32,6 +32,7 @@ DeviceGroup.setRelations(Device)
 Device.setRelations(DeviceGroup, Template)
 MeasurementFilter.setRelations(DeviceGroup)
 Template.setRelations(Device)
+Job.setRelations(MeasurementFilter, Measurement)
 
 module.exports = {
 	Base,
