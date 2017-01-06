@@ -22,7 +22,19 @@ const createModel = (job) => {
 	delete job.createdAt
 	delete job.updatedAt
 
+	if (job.condition && typeof job.condition.compare === 'string') {
+		job.condition.compare = JSON.parse(job.condition.compare)
+	}
+
 	return new JobModel(job)
+}
+
+const prepareData = (data) => {
+	if (data.condition && typeof data.condition.compare === 'object') {
+		data.condition.compare = JSON.stringify(data.condition.compare)
+	}
+
+	return data
 }
 
 var methods
@@ -56,9 +68,10 @@ module.exports = methods = {
 			return reject(err)
 		}
 
+
 		db.update(
 			{ id },
-			job.toJSON(),
+			prepareData(job.toJSON()),
 			{ upsert: true },
 			(err /*, numReplaced, upsert*/) => {
 				if (err) return reject(err)

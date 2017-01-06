@@ -1,15 +1,10 @@
 const _ = require('underscore')
 const Promise = require('bluebird')
 const MeasurementFilterModel = require('../models/MeasurementFilter')
+const MeasurementListModel = require('../models/MeasurementList')
 const DeviceModel = require('../models/Device')
 const fields = require('../config/fields')
 const sequelize = require('../helpers/sequelize')('measurements')
-
-const createResponse = (filter, columns, values) => ({
-	filter,
-	columns,
-	values,
-})
 
 module.exports = {
 	findByFilter: (filter) => new Promise((resolve, reject) => {
@@ -18,7 +13,7 @@ module.exports = {
 		var udids = filter.getAllUDIDs()
 
 		if (udids.length === 0) {
-			return resolve(createResponse(filter, [], []))
+			return resolve(new MeasurementListModel(filter))
 		}
 
 		DeviceModel.find({ udid: udids }).then((devices) => {
@@ -43,7 +38,7 @@ module.exports = {
 			var selects = []
 			filter.getFields().forEach(({ name, aggregator }) => {
 				if ( ! fields[name]) {
-					throw new Error('Field not supported by template.')
+					throw new Error(`Field "${name}" not supported by template.`)
 				}
 
 				columns.push(name)
@@ -76,8 +71,8 @@ module.exports = {
 			`.replace(/\t/g, '')
 
 			sequelize.query(sql, { type: sequelize.QueryTypes.SELECT }).then((results) => {
-				resolve(createResponse(filter, columns, _.map(results, (result) => _.values(result))))
-			})
+				resolve(new MeasurementListModel(filter, results))
+			}, reject)
 		}).catch(reject)
 	}),
 }

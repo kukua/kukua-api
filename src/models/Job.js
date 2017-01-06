@@ -1,8 +1,9 @@
-const Validator = require('validatorjs')
 const Base = require('./Base')
+const Validator = require('../helpers/validator')
 const { ValidationError } = require('../helpers/errors')
 const mapProviderMethods = require('../helpers/mapProviderMethods')
 const log = require('../helpers/log').child({ type: 'jobs' })
+const filtr = require('filtr')
 
 var MeasurementFilter, Measurement
 
@@ -16,8 +17,8 @@ class JobModel extends Base {
 			id: 'required|string|regex:/^[\\w\\.]+$/',
 			trigger: {
 				schedule: {
-					interval: 'required_without:trigger.schedule.cron|string',
-					cron: 'required_without:trigger.schedule.interval|string',
+					interval: 'required_without:trigger.schedule.cron|duration',
+					cron: 'required_without:trigger.schedule.interval|cron',
 				},
 			},
 			input: {
@@ -34,8 +35,12 @@ class JobModel extends Base {
 					},
 				},
 			},
-			//condition: 'object',
-			throttle_period: 'string',
+			condition: {
+				compare: {
+					measurements: 'required|object',
+				}
+			},
+			throttle_period: 'duration',
 			created_at: 'date',
 			updated_at: 'date',
 		}
@@ -59,16 +64,24 @@ class JobModel extends Base {
 		return JobModel.unschedule(this).then(() => this)
 	}
 	exec () {
-		log.info({
-			job_id: this.id,
-			is_executing: true,
-		}, `Executing job ${this.id}.`)
+		var logger = log.child({ job_id: this.id, is_executing: true })
+		logger.info(`Executing job ${this.id}.`)
 
 		var filter = this.get('input').measurements.filter
 		return MeasurementFilter.unserialize(filter)
 			.then((filter) => Measurement.findByFilter(filter))
 			.then((measurements) => {
-				console.log(measurements)
+				var filter = filtr(this.get('condition').compare.measurements)
+
+				try {
+					var results = filter.test(measurements.getItems())
+				} catch (err) {
+					logger.error(err)
+					// TODO(mauvm): Improve error response
+					throw new Error('Error filtering measurements. Please check the compare condition.')
+				}
+
+				console.log(results)
 			})
 	}
 }
