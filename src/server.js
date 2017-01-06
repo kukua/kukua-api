@@ -10,8 +10,6 @@ const port = Number(process.env.PORT || 3000)
 const version = require('../package.json').version.replace('.0.0', '')
 
 const log = require('./helpers/log')
-process.on('uncaughtException', (err) => log.error(err))
-
 const { NotFoundError, InternalServerError } = require('./helpers/errors')
 
 const UserController = require('./controllers/User')
@@ -94,6 +92,12 @@ app.use((err, req, res, next) => {
 	if ( ! (err instanceof Error)) err = new InternalServerError(err)
 	res.error(err)
 	next()
+})
+
+process.on('uncaughtException', (err) => {
+	log.error(err)
+
+	if (err.errno === 'EADDRINUSE') process.exit(1)
 })
 
 app.listen(port, () => log.info({ type: 'status' }, 'Listening on port ' + port))
