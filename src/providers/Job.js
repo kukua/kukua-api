@@ -6,7 +6,7 @@ const db = new Datastore({
 	autoload: true,
 	timestampData: true,
 })
-const { BadRequestError, NotFoundError } = require('../helpers/errors')
+const { NotFoundError } = require('../helpers/errors')
 const JobModel = require('../models/Job')
 const JobScheduler = require('./JobScheduler')
 
@@ -53,9 +53,6 @@ module.exports = methods = {
 		try {
 			job.validate()
 		} catch (err) {
-			if (err.isJoi) {
-				err = new BadRequestError(`Validation failed: ${err.details[0].message}.`)
-			}
 			return reject(err)
 		}
 

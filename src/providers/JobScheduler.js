@@ -2,7 +2,6 @@ const Promise = require('bluebird')
 const JobModel = require('../models/Job')
 const parseDuration = require('parse-duration')
 const scheduler = require('node-schedule')
-const { BadRequestError } = require('../helpers/errors')
 
 var jobs = {}
 
@@ -16,9 +15,6 @@ module.exports = {
 		try {
 			job.validate()
 		} catch (err) {
-			if (err.isJoi) {
-				err = new BadRequestError(`Validation failed: ${err.details[0].message}.`)
-			}
 			return reject(err)
 		}
 

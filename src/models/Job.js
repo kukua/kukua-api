@@ -1,5 +1,6 @@
+const Validator = require('validatorjs')
 const Base = require('./Base')
-const joi = require('../helpers/jobJoi')
+const { ValidationError } = require('../helpers/errors')
 const mapProviderMethods = require('../helpers/mapProviderMethods')
 const log = require('../helpers/log').child({ type: 'jobs' })
 
@@ -11,39 +12,40 @@ class JobModel extends Base {
 	}
 
 	getSchema () {
-		return joi.object().keys({
-			id: joi.string().required(),
-			trigger: joi.object().keys({
-				schedule: joi.alternatives().try(
-					joi.object().keys({
-						interval: joi.duration().required(),
-					}),
-					joi.object().keys({
-						cron: joi.cron().required(),
-					})
-				).required(),
-			}).required(),
-			input: joi.object().keys({
-				measurements: joi.object().keys({
-					filter: joi.object().keys({
-						udids: joi.array().required(),
-						device_groups: joi.array().required(),
-						fields: joi.array().required(),
-						interval: joi.number().required(),
-						from: joi.date().iso(),
-						to: joi.date().iso(),
-						sort: joi.array().required(),
-						limit: joi.number(),
-					}).required(),
-				}).required(),
-			}).required(),
-			throttle_period: joi.duration(),
-			created_at: joi.date().iso(),
-			updated_at: joi.date().iso(),
-		})
+		return {
+			id: 'required|string|regex:/^[\\w\\.]+$/',
+			trigger: {
+				schedule: {
+					interval: 'required_without:trigger.schedule.cron|string',
+					cron: 'required_without:trigger.schedule.interval|string',
+				},
+			},
+			input: {
+				measurements: {
+					filter: {
+						udids: 'required_without:input.measurements.filter.device_groups|array',
+						device_groups: 'required_without:input.measurements.filter.udids|array',
+						fields: 'required|array',
+						interval: 'required|numeric',
+						from: 'date',
+						to: 'date',
+						sort: 'required|array',
+						limit: 'numeric',
+					},
+				},
+			},
+			//condition: 'object',
+			throttle_period: 'string',
+			created_at: 'date',
+			updated_at: 'date',
+		}
 	}
 	validate () {
-		joi.assert(this.get(), this.getSchema())
+		var validator = new Validator(this.get(), this.getSchema())
+
+		if (validator.fails()) {
+			throw new ValidationError('Invalid job.', validator.errors.all())
+		}
 	}
 
 	get isRunning () {
