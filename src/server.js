@@ -35,10 +35,12 @@ express.response.error = function (err) {
 		this.status(500)
 	}
 
-	this.json({
-		statusCode: this.statusCode,
-		message: err,
-	})
+	var data = {}
+	if (typeof err.data === 'object') data = err.data
+
+	data.statusCode = this.statusCode
+	data.message = err
+	this.json(data)
 }
 express.response.ok = function (data = {}) {
 	this.status(200).json(Object.assign({

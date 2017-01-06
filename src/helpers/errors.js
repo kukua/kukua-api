@@ -1,3 +1,11 @@
+// Values in err.data object will be added to response and log
+class ValidationError extends Error {
+	constructor (msg = 'Bad request.', details = []) {
+		super(msg)
+		this.statusCode = 400
+		this.data = { details }
+	}
+}
 class BadRequestError extends Error {
 	constructor (msg = 'Bad request.') {
 		super(msg)
@@ -18,6 +26,7 @@ class InternalServerError extends Error {
 }
 
 module.exports = {
+	ValidationError,
 	BadRequestError,
 	NotFoundError,
 	InternalServerError,
