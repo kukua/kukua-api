@@ -22,22 +22,24 @@ const JobController = require('./controllers/Job')
 express.response.error = function (err) {
 	this.req.log.error(err)
 
-	if (err instanceof Error) {
-		if (err.statusCode) {
-			this.status(err.statusCode)
-		}
-
-		err = err.message
+	if ( ! (err instanceof Error)) {
+		err = new Error(err)
 	}
-	if (this.statusCode === 200) {
+	if (err.statusCode) {
+		this.status(err.statusCode)
+	} else if (this.statusCode === 200) {
 		this.status(500)
 	}
 
-	var data = {}
-	if (typeof err.data === 'object') data = err.data
+	var data = {
+		statusCode: this.statusCode,
+		message: err.message,
+	}
 
-	data.statusCode = this.statusCode
-	data.message = err
+	if (typeof err.data === 'object') {
+		data =Object.assign(data, err.data)
+	}
+
 	this.json(data)
 }
 express.response.ok = function (data = {}) {
