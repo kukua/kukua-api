@@ -16,7 +16,6 @@ bunyan.prototype.error = function (data, err) {
 		err = new Error(err)
 	}
 	if ( ! data) data = {}
-
 	if (typeof err.data === 'object') data.data = err.data
 
 	data.stack = err.stack
@@ -40,6 +39,7 @@ const log = bunyan.createLogger({
 			stream: new RotatingFileStream({
 				path: logPath,
 				period: '1d',
+				rotateExisting: true,
 			}),
 		},
 	]
