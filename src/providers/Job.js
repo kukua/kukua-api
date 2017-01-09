@@ -59,6 +59,9 @@ module.exports = methods = {
 		if (typeof id !== 'string') return reject('Invalid job key given.')
 		if (typeof data !== 'object') return reject('Invalid data object given.')
 
+		delete data.created_at
+		delete data.updated_at
+
 		data.id = id
 		var job = new JobModel(data)
 
@@ -67,7 +70,6 @@ module.exports = methods = {
 		} catch (err) {
 			return reject(err)
 		}
-
 
 		db.update(
 			{ id },

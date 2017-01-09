@@ -51,11 +51,14 @@ express.response.ok = function (data = {}) {
 
 // Middleware
 app.use(addRequestId())
-app.use(bodyParser.json({ limit: '100kb' }))
 app.use((req, res, next) => {
 	// Attach log
 	req.log = log.child({ rid: req.id })
 
+	next()
+})
+app.use(bodyParser.json({ limit: '100kb' }))
+app.use((req, res, next) => {
 	// Log request
 	var { method, url, query, headers, body } = req
 

@@ -1,9 +1,13 @@
+const _ = require('underscore')
+const Promise = require('bluebird')
+const deepcopy = require('deepcopy')
 const Base = require('./Base')
 const Validator = require('../helpers/validator')
 const { ValidationError } = require('../helpers/errors')
 const mapProviderMethods = require('../helpers/mapProviderMethods')
 const log = require('../helpers/log').child({ type: 'jobs' })
 const filtr = require('filtr')
+const actionModels = require('./Job/actions/')
 
 var MeasurementFilter, Measurement
 
@@ -40,6 +44,7 @@ class JobModel extends Base {
 					measurements: 'required|object',
 				}
 			},
+			actions: 'required|object',
 			throttle_period: 'duration',
 			created_at: 'date',
 			updated_at: 'date',
@@ -64,24 +69,47 @@ class JobModel extends Base {
 		return JobModel.unschedule(this).then(() => this)
 	}
 	exec () {
-		var logger = log.child({ job_id: this.id, is_executing: true })
-		logger.info(`Executing job ${this.id}.`)
+		var _log = log.child({ job_id: this.id, is_executing: true })
+		_log.info(`Executing job ${this.id}.`)
 
 		var filter = this.get('input').measurements.filter
+
 		return MeasurementFilter.unserialize(filter)
 			.then((filter) => Measurement.findByFilter(filter))
 			.then((measurements) => {
 				var filter = filtr(this.get('condition').compare.measurements)
+				var results = {}
 
 				try {
-					var results = filter.test(measurements.getItems())
+					results.measurements = filter.test(measurements.getItems())
 				} catch (err) {
-					logger.error(err)
+					_log.error(err)
 					// TODO(mauvm): Improve error response
 					throw new Error('Error filtering measurements. Please check the compare condition.')
 				}
 
-				console.log(results)
+				return Promise.all(
+					_.map(this.get('actions'), (actions, name) => new Promise((resolve, reject) => {
+						if (typeof actions !== 'object') return reject(`Invalid action "${name}": Not an object.`)
+
+						var data = deepcopy(results)
+						actions = _.map(actions, (action, key) => ({ action, key }))
+
+						return Promise.mapSeries(actions, ({ action, key }) => {
+							try {
+								var Model = _.find(actionModels, (Model) => Model.key === key)
+
+								if ( ! Model) throw new Error(`Unknown action "${key}".`)
+
+								var model = new Model(action)
+
+								return model.exec(data)
+							} catch (err) {
+								return reject(`Invalid action "${name}": ${err.message}`)
+							}
+						})
+					}))
+				)
 			})
 	}
 }
