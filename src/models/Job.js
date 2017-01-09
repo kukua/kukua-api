@@ -110,7 +110,7 @@ class JobModel extends Base {
 							} catch (err) {
 								return reject(`Invalid action "${name}": ${err.message}`)
 							}
-						}).then(() => resolve())
+						}).then(resolve, reject)
 					}))
 				)
 			})
