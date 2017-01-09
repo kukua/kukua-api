@@ -9,8 +9,8 @@ class Transform extends Base {
 				timeout: 1000,
 				sandbox: {
 					data,
-					ctx: data,
 					context: data,
+					ctx: data,
 				},
 			})
 			const script = this.getConfig().script

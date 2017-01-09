@@ -25,6 +25,9 @@ const createModel = (job) => {
 	if (job.condition && typeof job.condition.compare === 'string') {
 		job.condition.compare = JSON.parse(job.condition.compare)
 	}
+	if (typeof job.actions === 'string') {
+		job.actions = JSON.parse(job.actions)
+	}
 
 	return new JobModel(job)
 }
@@ -32,6 +35,9 @@ const createModel = (job) => {
 const prepareData = (data) => {
 	if (data.condition && typeof data.condition.compare === 'object') {
 		data.condition.compare = JSON.stringify(data.condition.compare)
+	}
+	if (typeof data.actions === 'object') {
+		data.actions = JSON.stringify(data.actions)
 	}
 
 	return data

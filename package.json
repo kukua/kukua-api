@@ -27,6 +27,7 @@
     "bunyan-rotating-file-stream": "^1.6.1",
     "cron-parser": "1.1.0",
     "deepcopy": "^0.6.3",
+    "dot-object": "^1.5.4",
     "dotenv": "^2.0.0",
     "eslint": "^3.10.1",
     "express": "^4.14.0",

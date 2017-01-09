@@ -17,7 +17,7 @@ class SlackHook extends Base {
 				json: true,
 			}, (err, res, body) => {
 				if (err) return reject(err)
-				if (res.statusCode !== 200) {
+				if (res.statusCode < 200 || res.statusCode >= 300) {
 					return reject(`Error in response (${res.statusCode}): ${body}`)
 				}
 
