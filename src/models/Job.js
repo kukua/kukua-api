@@ -101,13 +101,16 @@ class JobModel extends Base {
 
 								if ( ! Model) throw new Error(`Unknown action "${key}".`)
 
-								var model = new Model(action)
+								var model = new Model(
+									action,
+									_log.child({ action: `${name}.${key}` })
+								)
 
 								return model.exec(data)
 							} catch (err) {
 								return reject(`Invalid action "${name}": ${err.message}`)
 							}
-						})
+						}).then(() => resolve())
 					}))
 				)
 			})

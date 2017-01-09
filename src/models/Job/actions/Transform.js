@@ -8,7 +8,9 @@ class Transform extends Base {
 			const vm = new VM({
 				timeout: 1000,
 				sandbox: {
+					data,
 					ctx: data,
+					context: data,
 				},
 			})
 			const script = this.getConfig().script

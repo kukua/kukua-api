@@ -1,6 +1,7 @@
 class Base {
-	constructor (config = {}) {
+	constructor (config = {}, log) {
 		this._config = config
+		this._log = log
 	}
 
 	getConfig () {
