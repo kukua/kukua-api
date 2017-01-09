@@ -12,19 +12,6 @@ module.exports = class JobController {
 		app.post('/jobs/:id([\\w\\.]+)/trigger', auth(true), this.onTrigger.bind(this))
 		app.put('/jobs/:id([\\w\\.]+)', auth(true), this.onUpdate.bind(this))
 		app.delete('/jobs/:id([\\w\\.]+)', auth(true), this.onRemove.bind(this))
-
-		this._jobs = []
-		this.start().then((jobs) => {
-			var level = 'info'
-			var description = `all ${jobs.length}`
-
-			if (this._jobs.length !== jobs.length) {
-				level = 'warn'
-				description = `${this._jobs.length}/${jobs.length}`
-			}
-
-			log[level]({ job_ids: _.pluck(this._jobs, 'id') }, `Started ${description} jobs.`)
-		})
 	}
 
 	onIndex (req, res) {
@@ -47,42 +34,49 @@ module.exports = class JobController {
 	}
 	onUpdate (req, res) {
 		Job.updateById(req.params.id, req.body)
-			.then((job) => this.update(job))
+			.then((job) => this._updateJob(job))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
 	onRemove (req, res) {
 		Job.findById(req.params.id)
-			.then((job) => this.remove(job))
+			.then((job) => this._removeJob(job))
 			.then((job) => Job.remove(job))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
 
-	start () {
-		var allJobs
+	startAllJobs () {
+		if (this._jobs !== undefined) throw new Error('Jobs already started.')
+
+		this._jobs = []
+
 		return Job.find()
+			.then((jobs) => Promise.all(jobs.map((job) => this._startJob(job))))
 			.then((jobs) => {
-				allJobs = jobs
-				return Promise.all(jobs.map((job) => this._startJob(job)))
-			})
-			.then((jobs) => {
+				var total = jobs.length
+				var level = 'info'
+				var description = `all ${total}`
+
 				this._jobs = _.compact(jobs)
-				return allJobs
+
+				if (this._jobs.length !== total) {
+					level = 'warn'
+					description = `${this._jobs.length}/${total}`
+				}
+
+				log[level]({ job_ids: _.pluck(this._jobs, 'id') }, `Started ${description} jobs.`)
 			})
 	}
-	stop () {
-		return Promise.all(this._jobs.map((job) => this._stopJob(job)))
-	}
-	update (job) {
-		return this.remove(job)
+	_updateJob (job) {
+		return this._removeJob(job)
 			.then(() => this._startJob(job))
 			.then(() => {
 				this._jobs.push(job)
 				return job
 			})
 	}
-	remove (job) {
+	_removeJob (job) {
 		var runningJob = _.find(this._jobs, (item) => item.id === job.id)
 
 		if ( ! runningJob) return Promise.resolve(job)

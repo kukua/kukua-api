@@ -7,8 +7,8 @@ const { BadRequestError } = require('../helpers/errors')
 module.exports = class UserController {
 	constructor (app) {
 		app.get('/users/:id(\\d+)', auth(true), this.onShow.bind(this))
-		app.put('/users/:id(\\d+)/config/:configId([\\w\\.]+)', auth(true), this.onUpdate.bind(this))
-		app.delete('/users/:id(\\d+)/config/:configId([\\w\\.]+)', auth(true), this.onRemove.bind(this))
+		app.put('/users/:id(\\d+)/config/:configId([\\w\\.]+)', auth(true), this.onConfigUpdate.bind(this))
+		app.delete('/users/:id(\\d+)/config/:configId([\\w\\.]+)', auth(true), this.onConfigRemove.bind(this))
 	}
 
 	onShow (req, res) {
@@ -17,7 +17,7 @@ module.exports = class UserController {
 			.then((user) => res.json(user))
 			.catch((err) => res.error(err))
 	}
-	onUpdate (req, res) {
+	onConfigUpdate (req, res) {
 		var { value } = req.body
 		if (value === undefined) throw new BadRequestError('No value provided.')
 		var data = { value }
@@ -27,7 +27,7 @@ module.exports = class UserController {
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
-	onRemove (req, res) {
+	onConfigRemove (req, res) {
 		User.findById(req.params.id)
 			.then((user) => UserConfig.removeByUserAndId(user, req.params.configId))
 			.then(() => res.ok())

@@ -86,7 +86,9 @@ new UserController(app)
 new DeviceController(app)
 new DeviceGroupController(app)
 new MeasurementController(app)
-new JobController(app)
+
+const jobController = new JobController(app)
+jobController.startAllJobs()
 
 // Error handling
 app.use((req, res, next) => {
