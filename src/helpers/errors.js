@@ -12,6 +12,12 @@ class BadRequestError extends Error {
 		this.statusCode = 400
 	}
 }
+class UnauthorizedError extends Error {
+	constructor (msg = 'Unauthorized.') {
+		super(msg)
+		this.statusCode = 401
+	}
+}
 class NotFoundError extends Error {
 	constructor (msg = 'Not found.') {
 		super(msg)
@@ -28,6 +34,7 @@ class InternalServerError extends Error {
 module.exports = {
 	ValidationError,
 	BadRequestError,
+	UnauthorizedError,
 	NotFoundError,
 	InternalServerError,
 }
