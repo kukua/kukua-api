@@ -61,7 +61,7 @@ class MeasurementFilterModel {
 		if (isNaN(interval) || typeof interval !== 'number') {
 			throw new Error('Invalid interval.')
 		}
-		if (interval <= 300) {
+		if (interval < 300) {
 			throw new Error('Interval is too low.')
 		}
 

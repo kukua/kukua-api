@@ -1,5 +1,6 @@
 const Promise = require('bluebird')
 const moment = require('moment-timezone')
+const parseDuration = require('parse-duration')
 const MeasurementFilterModel = require('../models/MeasurementFilter')
 
 module.exports = {
@@ -17,9 +18,13 @@ module.exports = {
 				filter.addField('timestamp')
 			}
 			if (interval) {
+				if ( ! interval.match(/^[0-9]+$/)) {
+					interval = Math.round(parseDuration(interval) / 1000)
+				}
+
 				filter.setInterval(parseInt(interval))
 			} else {
-				filter.setInterval(600)
+				filter.setInterval(300)
 			}
 
 			filter.setFrom(from ? moment.utc(from) : moment.utc().subtract(1, 'day'))
