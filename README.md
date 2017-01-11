@@ -14,7 +14,7 @@ PUT /devices/abcdef0123456789/groups/tanzania
 DELETE /devices/abcdef0123456789/groups/tanzania
 GET /deviceGroups?includes=devices
 
-GET /measurements?devices=abcdef0123456789&deviceGroups=GroupName&fields=timestamp,temp:avg&from=2016-12-01&to=2016-12-31&limit=100
+GET /measurements?devices=abcdef0123456789&deviceGroups=Tanzania&fields=timestamp,temp:avg&from=2016-12-01&to=2016-12-31&limit=100&order=-temp:avg
 
 GET /users/2
 PUT /users/2/config/test {"value":{"a":1,"b":2}}

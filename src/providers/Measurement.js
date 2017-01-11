@@ -22,7 +22,7 @@ module.exports = {
 			}, reject)
 		}, reject).then((attributes) => {
 			// Check if all devices support requested fields
-			var uncommon = _.difference(...attributes)
+			var uncommon = (attributes.length > 1 ? _.difference(...attributes) : [])
 			var unsupported = []
 
 			_.pluck(filter.getFields(), 'name').forEach((name) => {
@@ -36,14 +36,15 @@ module.exports = {
 		}).then(() => {
 			var columns = []
 			var selects = []
-			filter.getFields().forEach(({ name, aggregator }) => {
+			filter.getFields().forEach(({ name, column, aggregator }) => {
 				if ( ! fields[name]) {
 					throw new Error(`Field "${name}" not supported by template.`)
 				}
 
 				columns.push(name)
-				selects.push(fields[name](filter, aggregator))
+				selects.push(fields[name](filter, aggregator, column))
 			})
+			columns = _.uniq(columns)
 
 			var from = filter.getFrom()
 			var to = filter.getTo()

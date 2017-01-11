@@ -12,6 +12,7 @@ module.exports = {
 			if (fields) {
 				fields.split(',').forEach((field) => {
 					var [ name, aggregator ] = field.split(':')
+					if (aggregator) aggregator = aggregator.toLowerCase()
 					filter.addField(name, aggregator)
 				})
 			} else {
@@ -37,6 +38,7 @@ module.exports = {
 						name = name.substr(1)
 						order = -1
 					}
+					name = name.replace(':', '_') // In case of -temp:max for temp:max field
 					filter.addSort(name, order)
 				})
 			} else {

@@ -49,7 +49,11 @@ class MeasurementFilterModel {
 		if (name === 'timestamp') aggregator = 'max'
 		if (aggregators.indexOf(aggregator) === -1) throw new Error('Invalid aggregator.')
 
-		this._fields.push({ name, aggregator })
+		var column = `${name}_${aggregator}`
+
+		if (name === 'timestamp') column = 'timestamp'
+
+		this._fields.push({ name, column, aggregator })
 		return this
 	}
 	getFields () {
@@ -72,7 +76,7 @@ class MeasurementFilterModel {
 		return this._interval
 	}
 	setFrom (date) {
-		if ( ! (date instanceof moment)) throw new Error('Invalid from date.')
+		if ( ! (date instanceof moment) || ! date.isValid()) throw new Error('Invalid from date.')
 
 		this._from = date
 		return this
@@ -81,7 +85,7 @@ class MeasurementFilterModel {
 		return this._from
 	}
 	setTo (date) {
-		if ( ! (date instanceof moment)) throw new Error('Invalid to date.')
+		if ( ! (date instanceof moment) || ! date.isValid()) throw new Error('Invalid to date.')
 
 		this._to = date
 		return this
@@ -90,6 +94,10 @@ class MeasurementFilterModel {
 		return this._to
 	}
 	addSort (name, order = 1) {
+		if ( ! this.getFields().find((field) => field.column === name)) {
+			throw new Error(`Unable to sort on missing field "${name}".`)
+		}
+
 		this._sort.push({ name, order })
 		return this
 	}
