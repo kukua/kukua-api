@@ -3,7 +3,7 @@ const moment = require('moment-timezone')
 const mapProviderMethods = require('../helpers/mapProviderMethods')
 const getAllDeviceIds = require('../helpers/getAllDeviceIds')
 
-const aggregators = ['sum', 'avg', 'min', 'max']
+const aggregators = ['sum', 'avg', 'min', 'max', 'count', 'std', 'varience']
 
 var DeviceGroup
 
