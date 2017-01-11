@@ -31,10 +31,16 @@ var Device = sequelize.define('device', {
 Device.hasMany(DeviceLabel, { as: 'labels' })
 DeviceLabel.belongsTo(Device)
 
+const isValidDeviceId = (id) => (typeof id === 'string' && id.match(/^[a-f0-9]{16}$/))
+
 const locationLabels = ['altitude_meters', 'country', 'longitude', 'latitude', 'timezone']
 const createModel = (device) => {
 	var attr = device.get()
 
+	attr.id = attr.udid
+	delete attr.udid
+
+	// Labels
 	attr.location = {}
 
 	var labels = {}
@@ -52,7 +58,6 @@ const createModel = (device) => {
 
 	locationLabels.forEach((key) => attr.location[key] = labels[key])
 
-	delete attr.id
 	delete attr.labels
 
 	return new DeviceModel(attr)
@@ -64,8 +69,8 @@ module.exports = {
 	find: (options = {}) => new Promise((resolve, reject) => {
 		var where = {}
 
-		if (Array.isArray(options.udid)) {
-			where.udid = { $in: options.udid }
+		if (Array.isArray(options.id)) {
+			where.udid = { $in: options.id }
 		}
 		if (typeof options.template_id === 'number') {
 			where.template_id = options.template_id
@@ -82,10 +87,12 @@ module.exports = {
 			resolve(devices.map((device) => createModel(device)))
 		}).catch(reject)
 	}),
-	findByUDID: (udid) => new Promise((resolve, reject) => {
+	findById: (id) => new Promise((resolve, reject) => {
+		if ( ! isValidDeviceId(id)) return reject('Invalid device ID.')
+
 		Device.findOne({
 			where: {
-				udid: ('' + udid).toLowerCase(),
+				udid: id,
 			},
 			include: {
 				model: DeviceLabel,

@@ -4,10 +4,6 @@ const mapProviderMethods = require('../helpers/mapProviderMethods')
 var DeviceGroup, Template
 
 class DeviceModel extends Base {
-	get id () {
-		return this.get('udid')
-	}
-
 	loadGroups () {
 		return DeviceGroup.findByDevice(this).then((groups) => {
 			this.set('groups', groups)

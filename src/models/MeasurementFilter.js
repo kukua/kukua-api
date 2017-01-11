@@ -1,7 +1,7 @@
 const Promise = require('bluebird')
 const moment = require('moment-timezone')
 const mapProviderMethods = require('../helpers/mapProviderMethods')
-const getAllUDIDs = require('../helpers/getAllUDIDs')
+const getAllDeviceIds = require('../helpers/getAllDeviceIds')
 
 const aggregators = ['sum', 'avg', 'min', 'max']
 
@@ -9,7 +9,7 @@ var DeviceGroup
 
 class MeasurementFilterModel {
 	constructor () {
-		this._udids = []
+		this._devices = []
 		this._deviceGroups = []
 		this._fields = []
 		this._interval = null
@@ -19,17 +19,22 @@ class MeasurementFilterModel {
 		this._limit = null
 	}
 
-	setUDIDs (udids) {
-		if ( ! Array.isArray(udids)) throw new Error('Invalid UDIDs.')
+	setDevices (deviceIds) {
+		if ( ! Array.isArray(deviceIds)) throw new Error('Invalid device IDs.')
 
-		this._udids = udids
+		this._devices = deviceIds
 		return this
 	}
-	getUDIDs () {
-		return this._udids
+	getDevices () {
+		return this._devices
 	}
 	setDeviceGroups (groups) {
 		if ( ! Array.isArray(groups)) throw new Error('Invalid device groups.')
+
+		groups.forEach((group) => {
+			if (group instanceof DeviceGroup) return
+			throw new Error('Invalid device group.')
+		})
 
 		this._deviceGroups = groups
 		return this
@@ -37,8 +42,8 @@ class MeasurementFilterModel {
 	getDeviceGroups () {
 		return this._deviceGroups
 	}
-	getAllUDIDs () {
-		return getAllUDIDs(this.getDeviceGroups(), this.getUDIDs())
+	getAllDeviceIds () {
+		return getAllDeviceIds(this.getDeviceGroups(), this.getDevices())
 	}
 	addField (name, aggregator = 'avg') {
 		if (name === 'timestamp') aggregator = 'max'
@@ -107,15 +112,15 @@ class MeasurementFilterModel {
 
 	serialize () {
 		var data = this.toJSON()
-		delete data.all_udids
+		delete data.all_device_ids
 		return JSON.stringify(data)
 	}
 
 	toJSON () {
 		return {
-			udids: this.getUDIDs(),
+			devices: this.getDevices(),
 			device_groups: this.getDeviceGroups().map((group) => group.id),
-			all_udids: this.getAllUDIDs(),
+			all_device_ids: this.getAllDeviceIds(),
 			fields: this.getFields(),
 			interval: this.getInterval(),
 			from: this.getFrom().toISOString(),
@@ -131,7 +136,7 @@ MeasurementFilterModel.unserialize = (json) => {
 		var data = (typeof json === 'object' ? json : JSON.parse(json))
 		var filter = new MeasurementFilterModel()
 
-		filter.setUDIDs(data.udids)
+		filter.setDevices(data.devices)
 		data.fields.map(({ name, aggregator }) => filter.addField(name, aggregator))
 		filter.setInterval(data.interval)
 		if (data.from) filter.setFrom(moment.utc(data.from))

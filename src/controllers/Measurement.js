@@ -1,7 +1,7 @@
 const Promise = require('bluebird')
 const auth = require('../helpers/authenticate')
 const MeasurementFilter = require('../models/MeasurementFilter')
-const getRequestedUDIDs = require('../helpers/getRequestedUDIDs')
+const getRequestedDeviceIds = require('../helpers/getRequestedDeviceIds')
 const Measurement = require('../models/Measurement')
 
 module.exports = class MeasurementController {
@@ -10,9 +10,9 @@ module.exports = class MeasurementController {
 	}
 
 	onIndex (req, res) {
-		Promise.all([ MeasurementFilter.fromRequest(req), getRequestedUDIDs(req) ])
-			.then(([ filter, { udids, deviceGroups } ]) => filter
-				.setUDIDs(udids)
+		Promise.all([ MeasurementFilter.fromRequest(req), getRequestedDeviceIds(req) ])
+			.then(([ filter, { devices, deviceGroups } ]) => filter
+				.setDevices(devices)
 				.setDeviceGroups(deviceGroups)
 			)
 			.then((filter) => Measurement.findByFilter(filter))

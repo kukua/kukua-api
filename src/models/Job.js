@@ -28,8 +28,8 @@ class JobModel extends Base {
 			input: {
 				measurements: {
 					filter: {
-						udids: 'required_without:input.measurements.filter.device_groups|array',
-						device_groups: 'required_without:input.measurements.filter.udids|array',
+						devices: 'required_without:input.measurements.filter.device_groups|array',
+						device_groups: 'required_without:input.measurements.filter.devices|array',
 						fields: 'required|array',
 						interval: 'required|numeric',
 						from: 'date',

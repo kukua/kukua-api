@@ -10,13 +10,13 @@ module.exports = {
 	findByFilter: (filter) => new Promise((resolve, reject) => {
 		if ( ! (filter instanceof MeasurementFilterModel)) return reject('Invalid measurement filter.')
 
-		var udids = filter.getAllUDIDs()
+		var deviceIds = filter.getAllDeviceIds()
 
-		if (udids.length === 0) {
+		if (deviceIds.length === 0) {
 			return resolve(new MeasurementListModel(filter))
 		}
 
-		DeviceModel.find({ udid: udids }).then((devices) => {
+		DeviceModel.find({ id: deviceIds }).then((devices) => {
 			return Promise.all(devices.map((device) => device.load('template'))).then(() => {
 				return devices.map((device) => device.get('template').get('attributes'))
 			}, reject)
@@ -58,8 +58,8 @@ module.exports = {
 
 			var limit = (filter.getLimit() ? `LIMIT ${filter.getLimit()}` : '')
 
-			var tables = udids.map((udid) => (
-				`(SELECT \`${columns.join('`, `')}\` FROM \`${udid}\` ${where})`
+			var tables = deviceIds.map((id) => (
+				`(SELECT \`${columns.join('`, `')}\` FROM \`${id}\` ${where})`
 			)).join('UNION')
 
 			var sql = `

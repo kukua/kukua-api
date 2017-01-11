@@ -19,7 +19,7 @@ const createModel = (group) => {
 	var attr = {
 		id: group.id,
 		name: group.name,
-		device_udids: group.deviceUDIDs,
+		devices: group.devices,
 		created_at: group.createdAt,
 		updated_at: group.updatedAt,
 	}
@@ -45,7 +45,7 @@ module.exports = {
 	findByDevice: (device) => new Promise((resolve, reject) => {
 		if ( ! (device instanceof DeviceModel)) return reject('Invalid Device given.')
 
-		db.find({ deviceUDIDs: device.id }, (err, groups) => {
+		db.find({ devices: device.id }, (err, groups) => {
 			if (err) return reject(err)
 			resolve(groups.map((group) => createModel(group)))
 		})
@@ -56,7 +56,7 @@ module.exports = {
 
 		db.update(
 			{ id },
-			{ $set: { name: humanize(id) }, $addToSet: { deviceUDIDs: device.id } },
+			{ $set: { name: humanize(id) }, $addToSet: { devices: device.id } },
 			{ upsert: true },
 			(err /*, numReplaced, group*/) => {
 				if (err) return reject(err)
@@ -70,7 +70,7 @@ module.exports = {
 
 		db.update(
 			{ id },
-			{ $set: { name: humanize(id) }, $pull: { deviceUDIDs: device.id } },
+			{ $set: { name: humanize(id) }, $pull: { devices: device.id } },
 			{ upsert: true },
 			(err /*, numReplaced, group*/) => {
 				if (err) return reject(err)
