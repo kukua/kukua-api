@@ -60,7 +60,7 @@ module.exports = {
 
 			var tables = deviceIds.map((id) => (
 				`(SELECT \`${columns.join('`, `')}\` FROM \`${id}\` ${where})`
-			)).join('UNION')
+			)).join('UNION ALL')
 
 			var sql = `
 				SELECT ${selects.join(', ')}
