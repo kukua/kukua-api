@@ -40,6 +40,7 @@ const log = bunyan.createLogger({
 				path: logPath,
 				period: '1d',
 				rotateExisting: true,
+				startNewFile: true,
 			}),
 		},
 	]
