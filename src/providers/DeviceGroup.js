@@ -31,7 +31,7 @@ const methods = {
 		return new DeviceGroupModel(attr, providers)
 	},
 
-	getRequestedIds (req) {
+	getRequestedIDs (req) {
 		// &device_groups=country1,country2,...
 		return _.chain((req.query.deviceGroups || req.query.groups || '').split(','))
 			.map((id) => id.toLowerCase())
@@ -40,11 +40,11 @@ const methods = {
 			.uniq()
 			.value()
 	},
-	getDeviceIds (groups, deviceIds) {
+	getDeviceIDs (groups, deviceIDs) {
 		return _.chain(groups)
 			.map((group) => group.get('devices'))
 			.flatten()
-			.concat(deviceIds) // Add other
+			.concat(deviceIDs) // Add other
 			.uniq()
 			.value()
 	},
@@ -54,7 +54,7 @@ const methods = {
 			resolve(groups.map((group) => methods._createModel(group)))
 		})
 	}),
-	findById: (id) => new Promise((resolve, reject) => {
+	findByID: (id) => new Promise((resolve, reject) => {
 		if (slugify(id) !== id) return reject('Invalid group ID given (lowercase slug required).')
 
 		db.findOne({ id }).sort({ name: 1 }).exec((err, group) => {

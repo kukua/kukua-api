@@ -10,12 +10,12 @@ class UserController extends BaseController {
 		app.get('/users/login', this._onLogin.bind(this))
 		app.get('/users/:id(\\d+)', auth.middleware, this._onShow.bind(this))
 		app.put(
-			'/users/:id(\\d+)/config/:configId([\\w\\.]+)',
+			'/users/:id(\\d+)/config/:configID([\\w\\.]+)',
 			auth.middleware,
 			this._onConfigUpdate.bind(this)
 		)
 		app.delete(
-			'/users/:id(\\d+)/config/:configId([\\w\\.]+)',
+			'/users/:id(\\d+)/config/:configID([\\w\\.]+)',
 			auth.middleware,
 			this._onConfigRemove.bind(this)
 		)
@@ -39,7 +39,7 @@ class UserController extends BaseController {
 			.catch((err) => res.error(err))
 	}
 	_onShow (req, res) {
-		this._getProvider('user').findById(req.params.id)
+		this._getProvider('user').findByID(req.params.id)
 			.then((user) => this._addIncludes(req, user))
 			.then((user) => res.json(user))
 			.catch((err) => res.error(err))
@@ -49,14 +49,14 @@ class UserController extends BaseController {
 		if (value === undefined) throw new BadRequestError('No value provided.')
 		var data = { value }
 
-		this._getProvider('user').findById(req.params.id)
-			.then((user) => this._getProvider('userConfig').updateForUser(user, req.params.configId, data))
+		this._getProvider('user').findByID(req.params.id)
+			.then((user) => this._getProvider('userConfig').updateForUser(user, req.params.configID, data))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
 	_onConfigRemove (req, res) {
-		this._getProvider('user').findById(req.params.id)
-			.then((user) => this._getProvider('userConfig').removeByUserAndId(user, req.params.configId))
+		this._getProvider('user').findByID(req.params.id)
+			.then((user) => this._getProvider('userConfig').removeByUserAndID(user, req.params.configID))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}

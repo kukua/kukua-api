@@ -18,7 +18,7 @@ const methods = {
 
 		return new UserModel(attr, providers)
 	},
-	findById: (id) => new Promise((resolve, reject) => {
+	findByID: (id) => new Promise((resolve, reject) => {
 		User.findById(id)
 			.then((user) => {
 				if ( ! user) throw new NotFoundError()

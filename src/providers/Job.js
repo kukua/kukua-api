@@ -49,7 +49,7 @@ const methods = {
 			resolve(jobs.map((job) => methods._createModel(job)))
 		})
 	}),
-	findById: (id) => new Promise((resolve, reject) => {
+	findByID: (id) => new Promise((resolve, reject) => {
 		if (typeof id !== 'string') return reject('Invalid job key given.')
 
 		db.findOne({ id }, (err, job) => {
@@ -58,7 +58,7 @@ const methods = {
 			resolve(methods._createModel(job))
 		})
 	}),
-	updateById: (id, data) => new Promise((resolve, reject) => {
+	updateByID: (id, data) => new Promise((resolve, reject) => {
 		if (typeof id !== 'string') return reject('Invalid job key given.')
 		if (typeof data !== 'object') return reject('Invalid data object given.')
 
@@ -81,7 +81,7 @@ const methods = {
 			(err /*, numReplaced, upsert*/) => {
 				if (err) return reject(err)
 
-				methods.findById(id)
+				methods.findByID(id)
 					.then(resolve, reject)
 			}
 		)

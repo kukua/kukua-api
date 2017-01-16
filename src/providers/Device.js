@@ -5,7 +5,7 @@ const DeviceModel = require('../models/Device')
 const { Device, DeviceLabel } = require('./sequelizeModels/')
 const { NotFoundError } = require('../helpers/errors')
 
-const isValidId = (id) => (typeof id === 'string' && id.match(/^[a-f0-9]{16}$/))
+const isValidID = (id) => (typeof id === 'string' && id.match(/^[a-f0-9]{16}$/))
 
 const locationLabels = ['altitude_meters', 'country', 'longitude', 'latitude', 'timezone']
 
@@ -38,7 +38,7 @@ const methods = {
 
 		return new DeviceModel(attr, providers)
 	},
-	getRequestedIds (req) {
+	getRequestedIDs (req) {
 		// &devices=abcdef0123456789,...
 		return _.chain((req.query.devices || '').split(','))
 			.map((id) => id.toLowerCase())
@@ -69,8 +69,8 @@ const methods = {
 			.then(resolve)
 			.catch(reject)
 	}),
-	findById: (id) => new Promise((resolve, reject) => {
-		if ( ! isValidId(id)) return reject('Invalid device ID.')
+	findByID: (id) => new Promise((resolve, reject) => {
+		if ( ! isValidID(id)) return reject('Invalid device ID.')
 
 		Device.findOne({
 			where: {

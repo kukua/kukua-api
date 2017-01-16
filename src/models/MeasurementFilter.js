@@ -10,10 +10,10 @@ class MeasurementFilterModel extends BaseModel {
 		super(attributes, providerFactory)
 	}
 
-	setDevices (deviceIds) {
-		if ( ! Array.isArray(deviceIds)) throw new Error('Invalid device IDs.')
+	setDevices (deviceIDs) {
+		if ( ! Array.isArray(deviceIDs)) throw new Error('Invalid device IDs.')
 
-		this.set('devices', deviceIds)
+		this.set('devices', deviceIDs)
 		return this
 	}
 	getDevices () {
@@ -33,8 +33,8 @@ class MeasurementFilterModel extends BaseModel {
 	getDeviceGroups () {
 		return this.get('deviceGroups') || []
 	}
-	getAllDeviceIds () {
-		return this._getProvider('deviceGroup').getDeviceIds(this.getDeviceGroups(), this.getDevices())
+	getAllDeviceIDs () {
+		return this._getProvider('deviceGroup').getDeviceIDs(this.getDeviceGroups(), this.getDevices())
 	}
 	addField (name, aggregator = 'avg') {
 		if (name === 'timestamp') aggregator = 'max'
@@ -123,7 +123,7 @@ class MeasurementFilterModel extends BaseModel {
 		return {
 			devices: this.getDevices(),
 			device_groups: this.getDeviceGroups().map((group) => group.id),
-			all_device_ids: this.getAllDeviceIds(),
+			all_device_ids: this.getAllDeviceIDs(),
 			fields: this.getFields(),
 			interval: this.getInterval(),
 			from: this.getFrom().toISOString(),
@@ -147,7 +147,7 @@ MeasurementFilterModel.unserialize = (json, providerFactory) => {
 		data.sort.map(({ name, order }) => filter.addSort(name, order))
 		filter.setLimit(data.limit)
 
-		return Promise.all(data.device_groups.map((id) => providerFactory('deviceGroup').findById(id)))
+		return Promise.all(data.device_groups.map((id) => providerFactory('deviceGroup').findByID(id)))
 			.then((groups) => filter.setDeviceGroups(groups))
 	} catch (err) {
 		return Promise.reject(err)

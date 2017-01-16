@@ -11,13 +11,13 @@ const methods = {
 	findByFilter: (filter) => new Promise((resolve, reject) => {
 		if ( ! (filter instanceof MeasurementFilterModel)) return reject('Invalid measurement filter.')
 
-		var deviceIds = filter.getAllDeviceIds()
+		var deviceIDs = filter.getAllDeviceIDs()
 
-		if (deviceIds.length === 0) {
+		if (deviceIDs.length === 0) {
 			return resolve(new MeasurementListModel(filter, providers))
 		}
 
-		providers('device').find({ id: deviceIds })
+		providers('device').find({ id: deviceIDs })
 			.then((devices) => (
 				Promise.all(devices.map((device) => device.load('template')))
 					.then(() => devices.map((device) => device.get('template').get('attributes')))
@@ -62,7 +62,7 @@ const methods = {
 
 				var limit = (filter.getLimit() ? `LIMIT ${filter.getLimit()}` : '')
 
-				var tables = deviceIds.map((id) => (
+				var tables = deviceIDs.map((id) => (
 					`(SELECT \`${columns.join('`, `')}\` FROM \`${id}\` ${where})`
 				)).join('UNION ALL')
 

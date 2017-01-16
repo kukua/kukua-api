@@ -9,12 +9,12 @@ class DeviceGroupController extends BaseController {
 
 		app.get('/deviceGroups', auth.middleware, this._onIndex.bind(this))
 		app.put(
-			'/devices/:deviceId([\\da-fA-F]{16})/groups/:id([\\da-z\\-]+)',
+			'/devices/:deviceID([\\da-fA-F]{16})/groups/:id([\\da-z\\-]+)',
 			auth.middleware,
 			this._onUpdate.bind(this)
 		)
 		app.delete(
-			'/devices/:deviceId([\\da-fA-F]{16})/groups/:id([\\da-z\\-]+)',
+			'/devices/:deviceID([\\da-fA-F]{16})/groups/:id([\\da-z\\-]+)',
 			auth.middleware,
 			this._onRemove.bind(this)
 		)
@@ -27,13 +27,13 @@ class DeviceGroupController extends BaseController {
 			.catch((err) => res.error(err))
 	}
 	_onUpdate (req, res) {
-		this._getProvider('device').findById(req.params.deviceId)
+		this._getProvider('device').findByID(req.params.deviceID)
 			.then((device) => this._getProvider('deviceGroup').addDeviceToGroup(device, req.params.id))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
 	_onRemove (req, res) {
-		this._getProvider('device').findById(req.params.deviceId)
+		this._getProvider('device').findByID(req.params.deviceID)
 			.then((device) => this._getProvider('deviceGroup').removeDeviceFromGroup(device, req.params.id))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))

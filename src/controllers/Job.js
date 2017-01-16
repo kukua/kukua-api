@@ -24,19 +24,19 @@ class JobController extends BaseController {
 			.catch((err) => res.error(err))
 	}
 	_onShow (req, res) {
-		this._getProvider('job').findById(req.params.id)
+		this._getProvider('job').findByID(req.params.id)
 			.then((job) => this._addIncludes(req, job))
 			.then((job) => res.json(job))
 			.catch((err) => res.error(err))
 	}
 	_onTrigger (req, res) {
-		this._getProvider('job').findById(req.params.id)
+		this._getProvider('job').findByID(req.params.id)
 			.then((job) => job.exec())
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
 	_onUpdate (req, res) {
-		this._getProvider('job').updateById(req.params.id, req.body)
+		this._getProvider('job').updateByID(req.params.id, req.body)
 			.then((job) => this._updateJob(job))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
@@ -44,7 +44,7 @@ class JobController extends BaseController {
 	_onRemove (req, res) {
 		var provider = this._getProvider('job')
 
-		provider.findById(req.params.id)
+		provider.findByID(req.params.id)
 			.then((job) => this._removeJob(job))
 			.then((job) => provider.remove(job))
 			.then(() => res.ok())

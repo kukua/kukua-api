@@ -14,12 +14,12 @@ class MeasurementController extends BaseController {
 		var filter = this._getProvider('measurementFilter').fromRequest(req)
 
 		var group = this._getProvider('deviceGroup')
-		var groupIds = group.getRequestedIds(req)
+		var groupIDs = group.getRequestedIDs(req)
 
 		var device = this._getProvider('device')
-		filter.setDevices(device.getRequestedIds(req))
+		filter.setDevices(device.getRequestedIDs(req))
 
-		Promise.all(groupIds.map((groupId) => group.findById(groupId)))
+		Promise.all(groupIDs.map((groupID) => group.findByID(groupID)))
 			.then((groups) => filter.setDeviceGroups(groups))
 			.then((filter) => this._getProvider('measurement').findByFilter(filter))
 			.then((measurements) => res.json(measurements))

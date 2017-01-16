@@ -14,7 +14,7 @@ const db = new Datastore({
 db.ensureIndex({ fieldName: 'id' }, (err) => {
 	if (err) throw new Error(err)
 })
-db.ensureIndex({ fieldName: 'userId' }, (err) => {
+db.ensureIndex({ fieldName: 'userID' }, (err) => {
 	if (err) throw new Error(err)
 })
 
@@ -22,7 +22,7 @@ const methods = {
 	_createModel (item) {
 		var attr = {
 			id: item.id,
-			user_id: item.userId,
+			user_id: item.userID,
 			value: item.value,
 			created_at: item.createdAt,
 			updated_at: item.updatedAt,
@@ -38,7 +38,7 @@ const methods = {
 	findByUser: (user) => new Promise((resolve, reject) => {
 		if ( ! (user instanceof UserModel)) return reject('Invalid User given.')
 
-		db.find({ userId: user.id }, (err, items) => {
+		db.find({ userID: user.id }, (err, items) => {
 			if (err) return reject(err)
 			resolve(methods._createConfig(items.map((item) => methods._createModel(item))))
 		})
@@ -48,13 +48,13 @@ const methods = {
 		if (typeof id !== 'string') return reject('Invalid config key given.')
 		if (typeof data !== 'object') return reject('Invalid data object given.')
 
-		var userId = user.id
+		var userID = user.id
 
 		db.update(
-			{ id, userId },
+			{ id, userID },
 			{ $set: {
 				id,
-				userId,
+				userID,
 				value: data.value,
 			} },
 			{ upsert: true },
@@ -64,12 +64,12 @@ const methods = {
 			}
 		)
 	}),
-	removeByUserAndId: (user, id) => new Promise((resolve, reject) => {
+	removeByUserAndID: (user, id) => new Promise((resolve, reject) => {
 		if ( ! (user instanceof UserModel)) return reject('Invalid User given.')
 		if (typeof id !== 'string') return reject('Invalid config key given.')
 
 		db.remove(
-			{ id, userId: user.id },
+			{ id, userID: user.id },
 			{},
 			(err /*, numRemoved*/) => {
 				if (err) return reject(err)

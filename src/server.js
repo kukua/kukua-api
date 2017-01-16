@@ -1,7 +1,7 @@
 try { require('dotenv').config() } catch (ex) { /* Do nothing */ }
 
 const express = require('express')
-const addRequestId = require('express-request-id')
+const addRequestID = require('express-request-id')
 const bodyParser = require('body-parser')
 const app = express()
 const version = require('../package.json').version.replace('.0.0', '')
@@ -55,7 +55,7 @@ express.response.ok = function (data = {}) {
 }
 
 // Middleware
-app.use(addRequestId())
+app.use(addRequestID())
 app.use((req, res, next) => {
 	// Attach log
 	req.log = log.child({ rid: req.id })

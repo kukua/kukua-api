@@ -14,7 +14,7 @@ const methods = {
 			return false
 		}
 
-		res.setHeader('X-User-Id', user.id)
+		res.setHeader('X-User-ID', user.id)
 		req.user = user
 		return true
 	},

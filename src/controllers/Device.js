@@ -13,15 +13,15 @@ class DeviceController extends BaseController {
 
 	_onIndex (req, res) {
 		var group = this._getProvider('deviceGroup')
-		var groupIds = group.getRequestedIds(req)
+		var groupIDs = group.getRequestedIDs(req)
 
 		var device = this._getProvider('device')
-		var deviceIds = device.getRequestedIds(req)
+		var deviceIDs = device.getRequestedIDs(req)
 
-		Promise.all(groupIds.map((groupId) => group.findById(groupId)))
-			.then((groups) => group.getDeviceIds(groups, deviceIds))
-			.then((deviceIds) => {
-				if (deviceIds.length > 0) return device.find({ id: deviceIds })
+		Promise.all(groupIDs.map((groupID) => group.findByID(groupID)))
+			.then((groups) => group.getDeviceIDs(groups, deviceIDs))
+			.then((deviceIDs) => {
+				if (deviceIDs.length > 0) return device.find({ id: deviceIDs })
 				return device.find()
 			})
 			.then((devices) => Promise.all(devices.map((device) => this._addIncludes(req, device))))
@@ -29,7 +29,7 @@ class DeviceController extends BaseController {
 			.catch((err) => res.error(err))
 	}
 	_onShow (req, res) {
-		this._getProvider('device').findById(req.params.id)
+		this._getProvider('device').findByID(req.params.id)
 			.then((device) => this._addIncludes(req, device))
 			.then((device) => res.json(device))
 			.catch((err) => res.error(err))
