@@ -83,6 +83,9 @@ app.use((req, res, next) => {
 		return res.status(400).error('Request does not accept JSON response.')
 	}
 
+	// Create session
+	req.session = {}
+
 	next()
 })
 

@@ -15,7 +15,7 @@ const methods = {
 		}
 
 		res.setHeader('X-User-ID', user.id)
-		req.user = user
+		req.session.user = user
 		return true
 	},
 	middleware (req, res, next) {
