@@ -1,40 +1,31 @@
 const _ = require('underscore')
+const BaseModel = require('./Base')
+const MeasurementFilterModel = require('./MeasurementFilter')
 
-var MeasurementFilter
+class MeasurementListModel extends BaseModel {
+	constructor (attributes, providerFactory) {
+		super(attributes, providerFactory)
 
-class MeasurementListModel {
-	constructor (filter, items = []) {
-		if ( ! (filter instanceof MeasurementFilter)) {
+		if (typeof attributes !== 'object') {
+			throw new Error('Attributes object required for measurement list model.')
+		}
+		if ( ! (attributes.filter instanceof MeasurementFilterModel)) {
 			throw new Error('Invalid measurement filter.')
 		}
-
-		this._filter = filter
-		this._items = items
-	}
-
-	getFilter () {
-		return this._filter
-	}
-	getItems () {
-		return this._items
+		if ( ! Array.isArray(attributes.items)) {
+			throw new Error('Invalid measurement list items.')
+		}
 	}
 
 	toJSON () {
-		var items = this.getItems()
+		var items = this.get('items')
 
 		return {
-			filter: this.getFilter(),
+			filter: this.get('filter'),
 			columns: (items.length > 0 ? _.keys(items[0]) : []),
 			values: _.map(items, (item) => _.values(item)),
 		}
 	}
-}
-
-/*MeasurementListModel.setProvider = (MeasurementListProvider) => {
-	mapProviderMethods(MeasurementListModel, MeasurementListProvider)
-}*/
-MeasurementListModel.setRelations = (MeasurementFilterModel) => {
-	MeasurementFilter = MeasurementFilterModel
 }
 
 module.exports = MeasurementListModel

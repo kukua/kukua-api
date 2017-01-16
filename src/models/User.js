@@ -1,21 +1,16 @@
-const Base = require('./Base')
-const mapProviderMethods = require('../helpers/mapProviderMethods')
+const BaseModel = require('./Base')
 
-var UserConfig
-
-class UserModel extends Base {
-	loadConfig () {
-		return UserConfig.findByUser(this).then((config) => {
-			this.set('config', config)
-		})
+class UserModel extends BaseModel {
+	constructor (attributes, providerFactory) {
+		super(attributes, providerFactory)
 	}
-}
 
-UserModel.setProvider = (UserProvider) => {
-	mapProviderMethods(UserModel, UserProvider)
-}
-UserModel.setRelations = (UserConfigModel) => {
-	UserConfig = UserConfigModel
+	loadConfig () {
+		return this._getProvider('userConfig').findByUser(this)
+			.then((config) => {
+				this.set('config', config)
+			})
+	}
 }
 
 module.exports = UserModel

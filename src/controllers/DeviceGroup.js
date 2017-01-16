@@ -1,31 +1,43 @@
-const auth = require('../helpers/authenticate')
-const DeviceGroup = require('../models/DeviceGroup')
-const addIncludes = require('../helpers/addIncludes')
-const Device = require('../models/Device')
+const Promise = require('bluebird')
+const BaseController = require('./Base')
 
-module.exports = class DeviceGroupController {
-	constructor (app) {
-		app.get('/deviceGroups', auth(), this.onIndex.bind(this))
-		app.put('/devices/:deviceId([\\da-fA-F]{16})/groups/:id([\\da-z\\-]+)', auth(), this.onUpdate.bind(this))
-		app.delete('/devices/:deviceId([\\da-fA-F]{16})/groups/:id([\\da-z\\-]+)', auth(), this.onRemove.bind(this))
+class DeviceGroupController extends BaseController {
+	constructor (app, providerFactory) {
+		super(app, providerFactory)
+
+		var auth = this._getProvider('auth')
+
+		app.get('/deviceGroups', auth.middleware, this._onIndex.bind(this))
+		app.put(
+			'/devices/:deviceId([\\da-fA-F]{16})/groups/:id([\\da-z\\-]+)',
+			auth.middleware,
+			this._onUpdate.bind(this)
+		)
+		app.delete(
+			'/devices/:deviceId([\\da-fA-F]{16})/groups/:id([\\da-z\\-]+)',
+			auth.middleware,
+			this._onRemove.bind(this)
+		)
 	}
 
-	onIndex (req, res) {
-		DeviceGroup.find()
-			.then((groups) => Promise.all(groups.map((group) => addIncludes(req, group))))
+	_onIndex (req, res) {
+		this._getProvider('deviceGroup').find()
+			.then((groups) => Promise.all(groups.map((group) => this._addIncludes(req, group))))
 			.then((groups) => res.json(groups))
 			.catch((err) => res.error(err))
 	}
-	onUpdate (req, res) {
-		Device.findById(req.params.deviceId)
-			.then((device) => DeviceGroup.addDeviceToGroup(device, req.params.id))
+	_onUpdate (req, res) {
+		this._getProvider('device').findById(req.params.deviceId)
+			.then((device) => this._getProvider('deviceGroup').addDeviceToGroup(device, req.params.id))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
-	onRemove (req, res) {
-		Device.findById(req.params.deviceId)
-			.then((device) => DeviceGroup.removeDeviceFromGroup(device, req.params.id))
+	_onRemove (req, res) {
+		this._getProvider('device').findById(req.params.deviceId)
+			.then((device) => this._getProvider('deviceGroup').removeDeviceFromGroup(device, req.params.id))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
 }
+
+module.exports = DeviceGroupController

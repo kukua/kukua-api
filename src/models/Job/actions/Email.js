@@ -1,5 +1,5 @@
 const Promise = require('bluebird')
-const Base = require('./Base')
+const BaseAction = require('./Base')
 const Validator = require('../../../helpers/validator')
 const objectTemplate = require('../../../helpers/objectTemplate')
 const Mailgun = require('mailgun-js')({
@@ -7,7 +7,7 @@ const Mailgun = require('mailgun-js')({
 	domain: process.env.MAILGUN_DOMAIN,
 })
 
-class Email extends Base {
+class EmailAction extends BaseAction {
 	getSchema () {
 		return {
 			from: 'required|email',
@@ -46,6 +46,6 @@ class Email extends Base {
 	}
 }
 
-Email.key = 'email'
+EmailAction.key = 'email'
 
-module.exports = Email
+module.exports = EmailAction

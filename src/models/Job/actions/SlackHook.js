@@ -1,8 +1,8 @@
 const Promise = require('bluebird')
 const request = require('request')
-const Base = require('./Base')
+const BaseAction = require('./Base')
 
-class SlackHook extends Base {
+class SlackHookAction extends BaseAction {
 	exec (data) {
 		return new Promise((resolve, reject) => {
 			if (typeof data.transform !== 'string') {
@@ -27,6 +27,6 @@ class SlackHook extends Base {
 	}
 }
 
-SlackHook.key = 'slack_hook'
+SlackHookAction.key = 'slack_hook'
 
-module.exports = SlackHook
+module.exports = SlackHookAction

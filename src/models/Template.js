@@ -1,21 +1,16 @@
-const Base = require('./Base')
-const mapProviderMethods = require('../helpers/mapProviderMethods')
+const BaseModel = require('./Base')
 
-var Device
-
-class TemplateModel extends Base {
-	loadDevices () {
-		return Device.find({ template_id: this.id }).then((devices) => {
-			this.set('devices', devices)
-		})
+class TemplateModel extends BaseModel {
+	constructor (attributes, providerFactory) {
+		super(attributes, providerFactory)
 	}
-}
 
-TemplateModel.setProvider = (TemplateProvider) => {
-	mapProviderMethods(TemplateModel, TemplateProvider)
-}
-TemplateModel.setRelations = (DeviceModel) => {
-	Device = DeviceModel
+	loadDevices () {
+		return this._getProvider('device').find({ template_id: this.id })
+			.then((devices) => {
+				this.set('devices', devices)
+			})
+	}
 }
 
 module.exports = TemplateModel

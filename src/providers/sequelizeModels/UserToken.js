@@ -1,7 +1,8 @@
 const Sequelize = require('sequelize')
-const sequelize = require('../helpers/sequelize')('concava')
+const providers = require('../')
+const sequelize = providers('sequelize').forDB('concava')
 
-var UserToken = sequelize.define('user_token', {
+const UserToken = sequelize.define('user_token', {
 	id: {
 		type: Sequelize.INTEGER,
 		primaryKey: true,
@@ -16,6 +17,4 @@ var UserToken = sequelize.define('user_token', {
 	},
 })
 
-module.exports = {
-	SequelizeModel: UserToken,
-}
+module.exports = UserToken

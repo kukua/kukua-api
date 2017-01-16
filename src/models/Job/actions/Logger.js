@@ -1,13 +1,13 @@
 const Promise = require('bluebird')
-const Base = require('./Base')
+const BaseAction = require('./Base')
 
-class Logger extends Base {
+class LoggerAction extends BaseAction {
 	exec (data) {
 		this._log.info({ data })
 		return Promise.resolve()
 	}
 }
 
-Logger.key = 'logger'
+LoggerAction.key = 'logger'
 
-module.exports = Logger
+module.exports = LoggerAction

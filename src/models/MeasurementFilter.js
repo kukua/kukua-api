@@ -1,49 +1,40 @@
 const Promise = require('bluebird')
 const moment = require('moment-timezone')
-const mapProviderMethods = require('../helpers/mapProviderMethods')
-const getAllDeviceIds = require('../helpers/getAllDeviceIds')
+const BaseModel = require('./Base')
+const DeviceGroupModel = require('./DeviceGroup')
 
 const aggregators = ['sum', 'avg', 'min', 'max', 'count', 'std', 'varience']
 
-var DeviceGroup
-
-class MeasurementFilterModel {
-	constructor () {
-		this._devices = []
-		this._deviceGroups = []
-		this._fields = []
-		this._interval = null
-		this._from = null
-		this._to = null
-		this._sort = []
-		this._limit = null
+class MeasurementFilterModel extends BaseModel {
+	constructor (attributes, providerFactory) {
+		super(attributes, providerFactory)
 	}
 
 	setDevices (deviceIds) {
 		if ( ! Array.isArray(deviceIds)) throw new Error('Invalid device IDs.')
 
-		this._devices = deviceIds
+		this.set('devices', deviceIds)
 		return this
 	}
 	getDevices () {
-		return this._devices
+		return this.get('devices') || []
 	}
 	setDeviceGroups (groups) {
 		if ( ! Array.isArray(groups)) throw new Error('Invalid device groups.')
 
 		groups.forEach((group) => {
-			if (group instanceof DeviceGroup) return
+			if (group instanceof DeviceGroupModel) return
 			throw new Error('Invalid device group.')
 		})
 
-		this._deviceGroups = groups
+		this.set('deviceGroups', groups)
 		return this
 	}
 	getDeviceGroups () {
-		return this._deviceGroups
+		return this.get('deviceGroups') || []
 	}
 	getAllDeviceIds () {
-		return getAllDeviceIds(this.getDeviceGroups(), this.getDevices())
+		return this._getProvider('deviceGroup').getDeviceIds(this.getDeviceGroups(), this.getDevices())
 	}
 	addField (name, aggregator = 'avg') {
 		if (name === 'timestamp') aggregator = 'max'
@@ -53,11 +44,13 @@ class MeasurementFilterModel {
 
 		if (name === 'timestamp') column = 'timestamp'
 
-		this._fields.push({ name, column, aggregator })
+		var fields = this.getFields()
+		fields.push({ name, column, aggregator })
+		this.set('fields', fields)
 		return this
 	}
 	getFields () {
-		return this._fields
+		return this.get('fields') || []
 	}
 	setInterval (interval) {
 		interval = Math.round(interval)
@@ -69,40 +62,42 @@ class MeasurementFilterModel {
 			throw new Error('Interval is too low.')
 		}
 
-		this._interval = interval
+		this.set('interval', interval)
 		return this
 	}
 	getInterval () {
-		return this._interval
+		return this.get('interval')
 	}
 	setFrom (date) {
 		if ( ! (date instanceof moment) || ! date.isValid()) throw new Error('Invalid from date.')
 
-		this._from = date
+		this.set('from', date)
 		return this
 	}
 	getFrom () {
-		return this._from
+		return this.get('from')
 	}
 	setTo (date) {
 		if ( ! (date instanceof moment) || ! date.isValid()) throw new Error('Invalid to date.')
 
-		this._to = date
+		this.set('to', date)
 		return this
 	}
 	getTo () {
-		return this._to
+		return this.get('to')
 	}
 	addSort (name, order = 1) {
 		if ( ! this.getFields().find((field) => field.column === name)) {
 			throw new Error(`Unable to sort on missing field "${name}".`)
 		}
 
-		this._sort.push({ name, order })
+		var sort = this.getSorting()
+		sort.push({ name, order })
+		this.set('sort', sort)
 		return this
 	}
 	getSorting () {
-		return this._sort
+		return this.get('sort') || []
 	}
 	setLimit (limit) {
 		limit = Math.round(limit)
@@ -111,11 +106,11 @@ class MeasurementFilterModel {
 			throw new Error('Invalid limit.')
 		}
 
-		this._limit = limit
+		this.set('limit', limit)
 		return this
 	}
 	getLimit () {
-		return this._limit
+		return this.get('limit')
 	}
 
 	serialize () {
@@ -139,10 +134,10 @@ class MeasurementFilterModel {
 	}
 }
 
-MeasurementFilterModel.unserialize = (json) => {
+MeasurementFilterModel.unserialize = (json, providerFactory) => {
 	try {
 		var data = (typeof json === 'object' ? json : JSON.parse(json))
-		var filter = new MeasurementFilterModel()
+		var filter = new MeasurementFilterModel({}, providerFactory)
 
 		filter.setDevices(data.devices)
 		data.fields.map(({ name, aggregator }) => filter.addField(name, aggregator))
@@ -152,18 +147,11 @@ MeasurementFilterModel.unserialize = (json) => {
 		data.sort.map(({ name, order }) => filter.addSort(name, order))
 		filter.setLimit(data.limit)
 
-		return Promise.all(data.device_groups.map((id) => DeviceGroup.findById(id)))
+		return Promise.all(data.device_groups.map((id) => providerFactory('deviceGroup').findById(id)))
 			.then((groups) => filter.setDeviceGroups(groups))
 	} catch (err) {
 		return Promise.reject(err)
 	}
-}
-
-MeasurementFilterModel.setProvider = (MeasurementFilterProvider) => {
-	mapProviderMethods(MeasurementFilterModel, MeasurementFilterProvider)
-}
-MeasurementFilterModel.setRelations = (DeviceGroupModel) => {
-	DeviceGroup = DeviceGroupModel
 }
 
 module.exports = MeasurementFilterModel

@@ -1,55 +1,52 @@
 const path = require('path')
 const Promise = require('bluebird')
 const Datastore = require('nedb')
+const providers = require('./')
+const JobModel = require('../models/Job')
+const { NotFoundError } = require('../helpers/errors')
+
 const db = new Datastore({
 	filename: path.resolve(process.env.JOB_DB_PATH),
 	autoload: true,
 	timestampData: true,
 })
-const { NotFoundError } = require('../helpers/errors')
-const JobModel = require('../models/Job')
-const JobScheduler = require('./JobScheduler')
 
 db.ensureIndex({ fieldName: 'id', unique: true }, (err) => {
 	if (err) throw new Error(err)
 })
 
-const createModel = (job) => {
-	job.created_at = job.createdAt
-	job.updated_at = job.updatedAt
+const methods = {
+	_createModel (job) {
+		job.created_at = job.createdAt
+		job.updated_at = job.updatedAt
 
-	delete job._id
-	delete job.createdAt
-	delete job.updatedAt
+		delete job._id
+		delete job.createdAt
+		delete job.updatedAt
 
-	if (job.condition && typeof job.condition.compare === 'string') {
-		job.condition.compare = JSON.parse(job.condition.compare)
-	}
-	if (typeof job.actions === 'string') {
-		job.actions = JSON.parse(job.actions)
-	}
+		if (job.condition && typeof job.condition.compare === 'string') {
+			job.condition.compare = JSON.parse(job.condition.compare)
+		}
+		if (typeof job.actions === 'string') {
+			job.actions = JSON.parse(job.actions)
+		}
 
-	return new JobModel(job)
-}
+		return new JobModel(job, providers)
+	},
+	_prepareData (data) {
+		if (data.condition && typeof data.condition.compare === 'object') {
+			data.condition.compare = JSON.stringify(data.condition.compare)
+		}
+		if (typeof data.actions === 'object') {
+			data.actions = JSON.stringify(data.actions)
+		}
 
-const prepareData = (data) => {
-	if (data.condition && typeof data.condition.compare === 'object') {
-		data.condition.compare = JSON.stringify(data.condition.compare)
-	}
-	if (typeof data.actions === 'object') {
-		data.actions = JSON.stringify(data.actions)
-	}
-
-	return data
-}
-
-var methods
-
-module.exports = methods = {
+		return data
+	},
 	find: () => new Promise((resolve, reject) => {
 		db.find({}, (err, jobs) => {
 			if (err) return reject(err)
-			resolve(jobs.map((job) => createModel(job)))
+			resolve(jobs.map((job) => methods._createModel(job)))
 		})
 	}),
 	findById: (id) => new Promise((resolve, reject) => {
@@ -58,7 +55,7 @@ module.exports = methods = {
 		db.findOne({ id }, (err, job) => {
 			if (err) return reject(err)
 			if ( ! job) return reject(new NotFoundError())
-			resolve(createModel(job))
+			resolve(methods._createModel(job))
 		})
 	}),
 	updateById: (id, data) => new Promise((resolve, reject) => {
@@ -69,7 +66,7 @@ module.exports = methods = {
 		delete data.updated_at
 
 		data.id = id
-		var job = new JobModel(data)
+		var job = new JobModel(data, providers)
 
 		try {
 			job.validate()
@@ -79,11 +76,13 @@ module.exports = methods = {
 
 		db.update(
 			{ id },
-			prepareData(job.toJSON()),
+			methods._prepareData(job.toJSON()),
 			{ upsert: true },
 			(err /*, numReplaced, upsert*/) => {
 				if (err) return reject(err)
-				methods.findById(id).then(resolve, reject)
+
+				methods.findById(id)
+					.then(resolve, reject)
 			}
 		)
 	}),
@@ -100,7 +99,9 @@ module.exports = methods = {
 		)
 	}),
 
-	isRunning: (job) => JobScheduler.isRunning(job),
-	schedule: (job) => JobScheduler.schedule(job),
-	unschedule: (job) => JobScheduler.unschedule(job),
+	isRunning:  (job) => providers('jobScheduler').isRunning(job),
+	schedule:   (job) => providers('jobScheduler').schedule(job),
+	unschedule: (job) => providers('jobScheduler').unschedule(job),
 }
+
+module.exports = methods

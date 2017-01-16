@@ -1,19 +1,16 @@
 const _ = require('underscore')
 const Promise = require('bluebird')
 const deepcopy = require('deepcopy')
-const Base = require('./Base')
+const filtr = require('filtr')
+const BaseModel = require('./Base')
 const Validator = require('../helpers/validator')
 const { ValidationError } = require('../helpers/errors')
-const mapProviderMethods = require('../helpers/mapProviderMethods')
-const log = require('../helpers/log').child({ type: 'jobs' })
-const filtr = require('filtr')
+const MeasurementFilterModel = require('./MeasurementFilter')
 const actionModels = require('./Job/actions/')
 
-var MeasurementFilter, Measurement
-
-class JobModel extends Base {
-	constructor (attributes) {
-		super(attributes)
+class JobModel extends BaseModel {
+	constructor (attributes, providerFactory) {
+		super(attributes, providerFactory)
 	}
 
 	getSchema () {
@@ -59,31 +56,34 @@ class JobModel extends Base {
 	}
 
 	get isRunning () {
-		return JobModel.isRunning(this)
+		return this._getProvider('job').isRunning(this)
 	}
 
 	start () {
-		return JobModel.schedule(this).then(() => this)
+		return this._getProvider('job').schedule(this)
+			.then(() => this)
 	}
 	stop () {
-		return JobModel.unschedule(this).then(() => this)
+		return this._getProvider('job').unschedule(this)
+			.then(() => this)
 	}
 	exec () {
-		var _log = log.child({ job_id: this.id, is_executing: true })
-		_log.info(`Executing job ${this.id}.`)
+		var log = this._getProvider('log').child({ job_id: this.id, is_executing: true })
+
+		log.info(`Executing job ${this.id}.`)
 
 		var filter = this.get('input').measurements.filter
 
-		return MeasurementFilter.unserialize(filter)
-			.then((filter) => Measurement.findByFilter(filter))
+		return MeasurementFilterModel.unserialize(filter, this._getProviderFactory())
+			.then((filter) => this._getProvider('measurement').findByFilter(filter))
 			.then((measurements) => {
 				var filter = filtr(this.get('condition').compare.measurements)
 				var results = {}
 
 				try {
-					results.measurements = filter.test(measurements.getItems())
+					results.measurements = filter.test(measurements.get('items'))
 				} catch (err) {
-					_log.error(err)
+					log.error(err)
 					// TODO(mauvm): Improve error response
 					throw new Error('Error filtering measurements. Please check the compare condition.')
 				}
@@ -103,7 +103,7 @@ class JobModel extends Base {
 
 								var model = new Model(
 									action,
-									_log.child({ action: `${name}.${key}` })
+									log.child({ action: `${name}.${key}` })
 								)
 
 								return model.exec(data)
@@ -115,14 +115,6 @@ class JobModel extends Base {
 				)
 			})
 	}
-}
-
-JobModel.setProvider = (JobProvider) => {
-	mapProviderMethods(JobModel, JobProvider)
-}
-JobModel.setRelations = (MeasurementFilterModel, MeasurementModel) => {
-	MeasurementFilter = MeasurementFilterModel
-	Measurement = MeasurementModel
 }
 
 module.exports = JobModel

@@ -1,8 +1,8 @@
 const Promise = require('bluebird')
 const { VM } = require('vm2')
-const Base = require('./Base')
+const BaseAction = require('./Base')
 
-class Transform extends Base {
+class TransformAction extends BaseAction {
 	exec (data) {
 		return new Promise((resolve, reject) => {
 			const vm = new VM({
@@ -23,6 +23,6 @@ class Transform extends Base {
 	}
 }
 
-Transform.key = 'transform'
+TransformAction.key = 'transform'
 
-module.exports = Transform
+module.exports = TransformAction

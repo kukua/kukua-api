@@ -1,37 +1,57 @@
 const path = require('path')
+const _ = require('underscore')
 const Promise = require('bluebird')
 const Datastore = require('nedb')
+const slugify = require('underscore.string/slugify')
+const humanize = require('underscore.string/humanize')
+const providers = require('./')
+const DeviceGroupModel = require('../models/DeviceGroup')
+const DeviceModel = require('../models/Device')
+
 const db = new Datastore({
 	filename: path.resolve(process.env.DEVICE_GROUPS_DB_PATH),
 	autoload: true,
 	timestampData: true,
 })
-const DeviceGroupModel = require('../models/DeviceGroup')
-const DeviceModel = require('../models/Device')
-const slugify = require('underscore.string/slugify')
-const humanize = require('underscore.string/humanize')
 
 db.ensureIndex({ fieldName: 'id', unique: true }, (err) => {
 	if (err) throw new Error(err)
 })
 
-const createModel = (group) => {
-	var attr = {
-		id: group.id,
-		name: group.name,
-		devices: group.devices,
-		created_at: group.createdAt,
-		updated_at: group.updatedAt,
-	}
+const methods = {
+	_createModel (group) {
+		var attr = {
+			id: group.id,
+			name: group.name,
+			devices: group.devices,
+			created_at: group.createdAt,
+			updated_at: group.updatedAt,
+		}
 
-	return new DeviceGroupModel(attr)
-}
+		return new DeviceGroupModel(attr, providers)
+	},
 
-module.exports = {
+	getRequestedIds (req) {
+		// &device_groups=country1,country2,...
+		return _.chain((req.query.deviceGroups || req.query.groups || '').split(','))
+			.map((id) => id.toLowerCase())
+			// Also removes empty values, since ''.split(',') => ['']
+			.filter((id) => id.match(/^[\da-z\-]+$/))
+			.uniq()
+			.value()
+	},
+	getDeviceIds (groups, deviceIds) {
+		return _.chain(groups)
+			.map((group) => group.get('devices'))
+			.flatten()
+			.concat(deviceIds) // Add other
+			.uniq()
+			.value()
+	},
 	find: () => new Promise((resolve, reject) => {
 		db.find({}).sort({ name: 1 }).exec((err, groups) => {
 			if (err) return reject(err)
-			resolve(groups.map((group) => createModel(group)))
+			resolve(groups.map((group) => methods._createModel(group)))
 		})
 	}),
 	findById: (id) => new Promise((resolve, reject) => {
@@ -39,7 +59,7 @@ module.exports = {
 
 		db.findOne({ id }).sort({ name: 1 }).exec((err, group) => {
 			if (err) return reject(err)
-			resolve(createModel(group))
+			resolve(methods._createModel(group))
 		})
 	}),
 	findByDevice: (device) => new Promise((resolve, reject) => {
@@ -47,7 +67,7 @@ module.exports = {
 
 		db.find({ devices: device.id }, (err, groups) => {
 			if (err) return reject(err)
-			resolve(groups.map((group) => createModel(group)))
+			resolve(groups.map((group) => methods._createModel(group)))
 		})
 	}),
 	addDeviceToGroup: (device, id) => new Promise((resolve, reject) => {
@@ -79,3 +99,5 @@ module.exports = {
 		)
 	}),
 }
+
+module.exports = methods

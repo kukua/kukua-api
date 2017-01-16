@@ -1,31 +1,39 @@
 const Promise = require('bluebird')
-const auth = require('../helpers/authenticate')
-const getRequestedDeviceIds = require('../helpers/getRequestedDeviceIds')
-const Device = require('../models/Device')
-const addIncludes = require('../helpers/addIncludes')
-const getAllDeviceIds = require('../helpers/getAllDeviceIds')
+const BaseController = require('./Base')
 
-module.exports = class DeviceController {
-	constructor (app) {
-		app.get('/devices', auth(), this.onIndex.bind(this))
-		app.get('/devices/:id([\\da-fA-F]{16})', auth(), this.onShow.bind(this))
+class DeviceController extends BaseController {
+	constructor (app, providerFactory) {
+		super(app, providerFactory)
+
+		var auth = this._getProvider('auth')
+
+		app.get('/devices', auth.middleware, this._onIndex.bind(this))
+		app.get('/devices/:id([\\da-fA-F]{16})', auth.middleware, this._onShow.bind(this))
 	}
 
-	onIndex (req, res) {
-		getRequestedDeviceIds(req)
-			.then(({ devices, deviceGroups }) => {
-				var deviceIds = getAllDeviceIds(deviceGroups, devices)
-				if (deviceIds.length > 0) return Device.find({ id: deviceIds })
-				return Device.find()
+	_onIndex (req, res) {
+		var group = this._getProvider('deviceGroup')
+		var groupIds = group.getRequestedIds(req)
+
+		var device = this._getProvider('device')
+		var deviceIds = device.getRequestedIds(req)
+
+		Promise.all(groupIds.map((groupId) => group.findById(groupId)))
+			.then((groups) => group.getDeviceIds(groups, deviceIds))
+			.then((deviceIds) => {
+				if (deviceIds.length > 0) return device.find({ id: deviceIds })
+				return device.find()
 			})
-			.then((devices) => Promise.all(devices.map((device) => addIncludes(req, device))))
+			.then((devices) => Promise.all(devices.map((device) => this._addIncludes(req, device))))
 			.then((devices) => res.json(devices))
 			.catch((err) => res.error(err))
 	}
-	onShow (req, res) {
-		Device.findById(req.params.id)
-			.then((device) => addIncludes(req, device))
+	_onShow (req, res) {
+		this._getProvider('device').findById(req.params.id)
+			.then((device) => this._addIncludes(req, device))
 			.then((device) => res.json(device))
 			.catch((err) => res.error(err))
 	}
 }
+
+module.exports = DeviceController

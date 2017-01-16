@@ -1,9 +1,10 @@
 const _ = require('underscore')
 const classify = require('underscore.string/classify')
 
-module.exports = class BaseModel {
-	constructor (attributes) {
+class BaseModel {
+	constructor (attributes, providerFactory) {
 		this._attributes = attributes || {}
+		this._providerFactory = providerFactory
 	}
 
 	set (key, value) {
@@ -24,6 +25,13 @@ module.exports = class BaseModel {
 		return this.get('id')
 	}
 
+	_getProviderFactory () {
+		return this._providerFactory
+	}
+	_getProvider (name) {
+		return this._getProviderFactory()(name)
+	}
+
 	load (...relations) {
 		return Promise.all(_.flatten(relations).map((relation) => {
 			var fn = 'load' + classify(relation)
@@ -40,3 +48,5 @@ module.exports = class BaseModel {
 		return this._attributes
 	}
 }
+
+module.exports = BaseModel

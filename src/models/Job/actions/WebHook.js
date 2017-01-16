@@ -1,9 +1,9 @@
 const Promise = require('bluebird')
 const request = require('request')
-const Base = require('./Base')
+const BaseAction = require('./Base')
 const objectTemplate = require('../../../helpers/objectTemplate')
 
-class WebHook extends Base {
+class WebHookAction extends BaseAction {
 	exec (data) {
 		return new Promise((resolve, reject) => {
 			var config = Object.assign({}, this.getConfig())
@@ -25,6 +25,6 @@ class WebHook extends Base {
 	}
 }
 
-WebHook.key = 'web_hook'
+WebHookAction.key = 'web_hook'
 
-module.exports = WebHook
+module.exports = WebHookAction

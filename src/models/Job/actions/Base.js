@@ -1,4 +1,4 @@
-class Base {
+class BaseAction {
 	constructor (config = {}, log) {
 		this._config = config
 		this._log = log
@@ -13,4 +13,4 @@ class Base {
 	}
 }
 
-module.exports = Base
+module.exports = BaseAction

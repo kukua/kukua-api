@@ -1,47 +1,52 @@
-const Promise = require('bluebird')
 const _ = require('underscore')
-const auth = require('../helpers/authenticate')
-const log = require('../helpers/log').child({ type: 'jobs' })
-const Job = require('../models/Job')
-const addIncludes = require('../helpers/addIncludes')
+const Promise = require('bluebird')
+const BaseController = require('./Base')
 
-module.exports = class JobController {
-	constructor (app) {
-		app.get('/jobs', auth(true), this.onIndex.bind(this))
-		app.get('/jobs/:id([\\w\\.]+)', auth(true), this.onShow.bind(this))
-		app.post('/jobs/:id([\\w\\.]+)/trigger', auth(true), this.onTrigger.bind(this))
-		app.put('/jobs/:id([\\w\\.]+)', auth(true), this.onUpdate.bind(this))
-		app.delete('/jobs/:id([\\w\\.]+)', auth(true), this.onRemove.bind(this))
+class JobController extends BaseController {
+	constructor (app, providerFactory) {
+		super(app, providerFactory)
+
+		this._log = this._getProvider('log').child({ type: 'jobs' })
+
+		var auth = this._getProvider('auth')
+
+		app.get('/jobs', auth.middleware, this._onIndex.bind(this))
+		app.get('/jobs/:id([\\w\\.]+)', auth.middleware, this._onShow.bind(this))
+		app.post('/jobs/:id([\\w\\.]+)/trigger', auth.middleware, this._onTrigger.bind(this))
+		app.put('/jobs/:id([\\w\\.]+)', auth.middleware, this._onUpdate.bind(this))
+		app.delete('/jobs/:id([\\w\\.]+)', auth.middleware, this._onRemove.bind(this))
 	}
 
-	onIndex (req, res) {
-		Job.find()
-			.then((jobs) => Promise.all(jobs.map((job) => addIncludes(req, job))))
+	_onIndex (req, res) {
+		this._getProvider('job').find()
+			.then((jobs) => Promise.all(jobs.map((job) => this._addIncludes(req, job))))
 			.then((jobs) => res.json(jobs))
 			.catch((err) => res.error(err))
 	}
-	onShow (req, res) {
-		Job.findById(req.params.id)
-			.then((job) => addIncludes(req, job))
+	_onShow (req, res) {
+		this._getProvider('job').findById(req.params.id)
+			.then((job) => this._addIncludes(req, job))
 			.then((job) => res.json(job))
 			.catch((err) => res.error(err))
 	}
-	onTrigger (req, res) {
-		Job.findById(req.params.id)
+	_onTrigger (req, res) {
+		this._getProvider('job').findById(req.params.id)
 			.then((job) => job.exec())
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
-	onUpdate (req, res) {
-		Job.updateById(req.params.id, req.body)
+	_onUpdate (req, res) {
+		this._getProvider('job').updateById(req.params.id, req.body)
 			.then((job) => this._updateJob(job))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
-	onRemove (req, res) {
-		Job.findById(req.params.id)
+	_onRemove (req, res) {
+		var provider = this._getProvider('job')
+
+		provider.findById(req.params.id)
 			.then((job) => this._removeJob(job))
-			.then((job) => Job.remove(job))
+			.then((job) => provider.remove(job))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
@@ -51,7 +56,7 @@ module.exports = class JobController {
 
 		this._jobs = []
 
-		return Job.find()
+		return this._getProvider('job').find()
 			.then((jobs) => Promise.all(jobs.map((job) => this._startJob(job))))
 			.then((jobs) => {
 				var total = jobs.length
@@ -65,7 +70,7 @@ module.exports = class JobController {
 					description = `${this._jobs.length}/${total}`
 				}
 
-				log[level]({ job_ids: _.pluck(this._jobs, 'id') }, `Started ${description} jobs.`)
+				this._log[level]({ job_ids: _.pluck(this._jobs, 'id') }, `Started ${description} jobs.`)
 			})
 	}
 	_updateJob (job) {
@@ -81,32 +86,38 @@ module.exports = class JobController {
 
 		if ( ! runningJob) return Promise.resolve(job)
 
-		return this._stopJob(runningJob).then(() => {
-			this._jobs = _.without(this._jobs, runningJob)
-			return job
-		})
+		return this._stopJob(runningJob)
+			.then(() => {
+				this._jobs = _.without(this._jobs, runningJob)
+				return job
+			})
 	}
 	_startJob (job) {
-		return job.start().then(() => {
-			log.info({
-				job_id: job.id,
-				is_running: job.isRunning,
-			}, `Started job ${job.id}.`)
-			return job
-		}).catch((err) => {
-			log.error({
-				job_id: job.id,
-				is_running: job.isRunning,
-			}, err)
-		})
+		return job.start()
+			.then(() => {
+				this._log.info({
+					job_id: job.id,
+					is_running: job.isRunning,
+				}, `Started job ${job.id}.`)
+				return job
+			})
+			.catch((err) => {
+				this._log.error({
+					job_id: job.id,
+					is_running: job.isRunning,
+				}, err)
+			})
 	}
 	_stopJob (job) {
-		return job.stop().then(() => {
-			log.info({
-				job_id: job.id,
-				is_running: job.isRunning,
-			}, `Stopped job ${job.id}.`)
-			return job
-		})
+		return job.stop()
+			.then(() => {
+				this._log.info({
+					job_id: job.id,
+					is_running: job.isRunning,
+				}, `Stopped job ${job.id}.`)
+				return job
+			})
 	}
 }
+
+module.exports = JobController

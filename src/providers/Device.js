@@ -1,71 +1,52 @@
-const Sequelize = require('sequelize')
+const _ = require('underscore')
 const Promise = require('bluebird')
-const sequelize = require('../helpers/sequelize')('concava')
-const { NotFoundError } = require('../helpers/errors')
+const providers = require('./')
 const DeviceModel = require('../models/Device')
-const DeviceLabel = require('./_DeviceLabel').SequelizeModel
+const { Device, DeviceLabel } = require('./sequelizeModels/')
+const { NotFoundError } = require('../helpers/errors')
 
-var Device = sequelize.define('device', {
-	id: {
-		type: Sequelize.INTEGER,
-		primaryKey: true,
-	},
-	udid: {
-		type: Sequelize.STRING(16),
-		allowNull: false,
-		set: function (val, key) {
-			this.setDataValue(key, val.toLowerCase())
-		},
-		validate: {
-			is: {
-				args: /^[a-f0-9]{16}$/,
-				msg: 'Device ID should be 16 hexadecimal characters',
-			},
-			notEmpty: true,
-		},
-	},
-	template_id: Sequelize.INTEGER,
-	name: Sequelize.STRING,
-})
-
-Device.hasMany(DeviceLabel, { as: 'labels' })
-DeviceLabel.belongsTo(Device)
-
-const isValidDeviceId = (id) => (typeof id === 'string' && id.match(/^[a-f0-9]{16}$/))
+const isValidId = (id) => (typeof id === 'string' && id.match(/^[a-f0-9]{16}$/))
 
 const locationLabels = ['altitude_meters', 'country', 'longitude', 'latitude', 'timezone']
-const createModel = (device) => {
-	var attr = device.get()
 
-	attr.id = attr.udid
-	delete attr.udid
+const methods = {
+	_createModel (device) {
+		var attr = device.get()
 
-	// Labels
-	attr.location = {}
+		attr.id = attr.udid
+		delete attr.udid
 
-	var labels = {}
-	attr.labels.forEach((label) => {
-		var key = label.key, value = null
+		// Labels
+		attr.location = {}
 
-		try {
-			value = JSON.parse(label.value)
-		} catch (ex) { /* Do nothing */ }
+		var labels = {}
+		attr.labels.forEach((label) => {
+			var key = label.key, value = null
 
-		if (key === 'altitude') key = 'altitude_meters'
+			try {
+				value = JSON.parse(label.value)
+			} catch (ex) { /* Do nothing */ }
 
-		labels[key] = value
-	})
+			if (key === 'altitude') key = 'altitude_meters'
 
-	locationLabels.forEach((key) => attr.location[key] = labels[key])
+			labels[key] = value
+		})
 
-	delete attr.labels
+		locationLabels.forEach((key) => attr.location[key] = labels[key])
 
-	return new DeviceModel(attr)
-}
+		delete attr.labels
 
-module.exports = {
-	SequelizeModel: Device,
-
+		return new DeviceModel(attr, providers)
+	},
+	getRequestedIds (req) {
+		// &devices=abcdef0123456789,...
+		return _.chain((req.query.devices || '').split(','))
+			.map((id) => id.toLowerCase())
+			// Also removes empty values, since ''.split(',') => ['']
+			.filter((id) => id.match(/^[a-f0-9]{16}$/))
+			.uniq()
+			.value()
+	},
 	find: (options = {}) => new Promise((resolve, reject) => {
 		var where = {}
 
@@ -83,12 +64,13 @@ module.exports = {
 				as: 'labels',
 				required: false,
 			},
-		}).then((devices) => {
-			resolve(devices.map((device) => createModel(device)))
-		}).catch(reject)
+		})
+			.then((devices) => devices.map((device) => methods._createModel(device)))
+			.then(resolve)
+			.catch(reject)
 	}),
 	findById: (id) => new Promise((resolve, reject) => {
-		if ( ! isValidDeviceId(id)) return reject('Invalid device ID.')
+		if ( ! isValidId(id)) return reject('Invalid device ID.')
 
 		Device.findOne({
 			where: {
@@ -99,10 +81,14 @@ module.exports = {
 				as: 'labels',
 				required: false,
 			},
-		}).then((device) => {
-			if ( ! device) throw new NotFoundError()
-
-			resolve(createModel(device))
-		}).catch(reject)
+		})
+			.then((device) => {
+				if ( ! device) throw new NotFoundError()
+				return methods._createModel(device)
+			})
+			.then(resolve)
+			.catch(reject)
 	}),
 }
+
+module.exports = methods

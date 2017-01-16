@@ -1,13 +1,12 @@
 const Promise = require('bluebird')
-const JobModel = require('../models/Job')
 const parseDuration = require('parse-duration')
 const scheduler = require('node-schedule')
+const JobModel = require('../models/Job')
 
 var jobs = {}
 
-module.exports = {
+const methods = {
 	isRunning: (job) => !! jobs[job.id],
-
 	schedule: (job) => new Promise((resolve, reject) => {
 		if ( ! (job instanceof JobModel)) return reject('Invalid Job given.')
 		if (jobs[job.id]) return resolve()
@@ -41,3 +40,5 @@ module.exports = {
 		resolve()
 	}),
 }
+
+module.exports = methods

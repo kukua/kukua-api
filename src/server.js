@@ -1,15 +1,20 @@
 try { require('dotenv').config() } catch (ex) { /* Do nothing */ }
 
-require('./models') // Preload models and relations
-
 const express = require('express')
 const addRequestId = require('express-request-id')
 const bodyParser = require('body-parser')
 const app = express()
-const port = Number(process.env.PORT || 3000)
 const version = require('../package.json').version.replace('.0.0', '')
+const port = Number(process.env.PORT || 3000)
 
-const log = require('./helpers/log')
+const providers = require('./providers/')
+
+const log = providers('log')
+
+if (process.env.NODE_ENV !== 'production') {
+	log.level('debug')
+}
+
 const { NotFoundError, InternalServerError } = require('./helpers/errors')
 
 const UserController = require('./controllers/User')
@@ -37,7 +42,7 @@ express.response.error = function (err) {
 	}
 
 	if (typeof err.data === 'object') {
-		data =Object.assign(data, err.data)
+		data = Object.assign(data, err.data)
 	}
 
 	this.json(data)
@@ -82,12 +87,12 @@ app.use((req, res, next) => {
 })
 
 // Routing
-new UserController(app)
-new DeviceController(app)
-new DeviceGroupController(app)
-new MeasurementController(app)
+new UserController(app, providers)
+new DeviceController(app, providers)
+new DeviceGroupController(app, providers)
+new MeasurementController(app, providers)
 
-const jobController = new JobController(app)
+const jobController = new JobController(app, providers)
 jobController.startAllJobs()
 
 // Error handling
