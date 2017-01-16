@@ -1,7 +1,7 @@
 const providers = require('./')
 const { NotFoundError } = require('../helpers/errors')
 
-const missingHeader = 'Missing token. Please provide "Authorization: Token {token}" header.'
+const missingHeader = 'Missing token. Please provide "X-Auth-Token: {token}" header.'
 
 const methods = {
 	loginUser (req, res, user) {
@@ -19,13 +19,11 @@ const methods = {
 		return true
 	},
 	middleware (req, res, next) {
-		var header = req.headers.authorization
+		var token = req.headers['x-auth-token']
 
-		if ( ! header || ! header.toLowerCase().startsWith('token ')) {
-			return res.status(401).error(missingHeader)
-		}
+		if ( ! token) return res.status(401).error(missingHeader)
 
-		providers('user').findByToken(header.substr(6))
+		providers('user').findByToken(token.toLowerCase())
 			.then((user) => {
 				if ( ! methods.loginUser(req, res, user)) return
 				next()

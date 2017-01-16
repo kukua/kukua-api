@@ -3,7 +3,7 @@
 ## Routes
 
 ```
-Auth: curl -v {url} -H 'Authorization: Token {token}'
+Auth: curl -v {url} -H 'X-Auth-Token: {token}'
 
 GET /devices
 GET /devices?groups=tanzania
