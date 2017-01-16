@@ -32,7 +32,9 @@ const methods = {
 			labels[key] = value
 		})
 
-		locationLabels.forEach((key) => attr.location[key] = labels[key])
+		locationLabels.forEach((key) => {
+			attr.location[key] = (labels[key] !== undefined ? labels[key] : null)
+		})
 
 		delete attr.labels
 
