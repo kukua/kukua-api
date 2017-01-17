@@ -6,10 +6,6 @@ const DeviceGroupModel = require('./DeviceGroup')
 const aggregators = ['sum', 'avg', 'min', 'max', 'count', 'std', 'varience']
 
 class MeasurementFilterModel extends BaseModel {
-	constructor (attributes, providerFactory) {
-		super(attributes, providerFactory)
-	}
-
 	setDevices (deviceIDs) {
 		if ( ! Array.isArray(deviceIDs)) throw new Error('Invalid device IDs.')
 

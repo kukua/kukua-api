@@ -9,10 +9,6 @@ const MeasurementFilterModel = require('./MeasurementFilter')
 const actionModels = require('./Job/actions/')
 
 class JobModel extends BaseModel {
-	constructor (attributes, providerFactory) {
-		super(attributes, providerFactory)
-	}
-
 	getSchema () {
 		return {
 			id: 'required|string|regex:/^[\\w\\.]+$/',

@@ -2,10 +2,6 @@ const Promise = require('bluebird')
 const BaseModel = require('./Base')
 
 class DeviceGroupModel extends BaseModel {
-	constructor (attributes, providerFactory) {
-		super(attributes, providerFactory)
-	}
-
 	loadDevices () {
 		var deviceIDs = this.get('devices')
 

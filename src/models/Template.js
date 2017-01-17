@@ -1,10 +1,6 @@
 const BaseModel = require('./Base')
 
 class TemplateModel extends BaseModel {
-	constructor (attributes, providerFactory) {
-		super(attributes, providerFactory)
-	}
-
 	loadDevices () {
 		return this._getProvider('device').find({ template_id: this.id })
 			.then((devices) => {
