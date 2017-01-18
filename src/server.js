@@ -21,6 +21,7 @@ const UserController = require('./controllers/User')
 const DeviceController = require('./controllers/Device')
 const DeviceGroupController = require('./controllers/DeviceGroup')
 const MeasurementController = require('./controllers/Measurement')
+const ForecastController = require('./controllers/Forecast')
 const JobController = require('./controllers/Job')
 
 // Custom responses
@@ -94,6 +95,7 @@ new UserController(app, providers)
 new DeviceController(app, providers)
 new DeviceGroupController(app, providers)
 new MeasurementController(app, providers)
+new ForecastController(app, providers)
 
 const jobController = new JobController(app, providers)
 jobController.startAllJobs()

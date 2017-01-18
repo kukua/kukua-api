@@ -4,6 +4,7 @@ const Device = require('./Device')
 const DeviceLabel = require('./DeviceLabel')
 const Template = require('./Template')
 const Attribute = require('./Attribute')
+const ForecastLocation = require('./ForecastLocation')
 
 // Relations
 User.hasMany(UserToken)
@@ -22,4 +23,5 @@ module.exports = {
 	User, UserToken,
 	Device, DeviceLabel,
 	Template, Attribute,
+	ForecastLocation,
 }

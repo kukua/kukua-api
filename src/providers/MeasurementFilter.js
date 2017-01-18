@@ -8,15 +8,16 @@ const methods = {
 		var filter = new MeasurementFilterModel({}, providers)
 		var { fields, interval, from, to, sort, limit } = req.query
 
+		filter.addField('timestamp')
+
 		if (fields) {
 			fields.split(',').forEach((field) => {
 				var [ name, aggregator ] = field.split(':')
 				if (aggregator) aggregator = aggregator.toLowerCase()
 				filter.addField(name, aggregator)
 			})
-		} else {
-			filter.addField('timestamp')
 		}
+
 		if (interval) {
 			if ( ! interval.match(/^[0-9]+$/)) {
 				interval = Math.round(parseDuration(interval) / 1000)
@@ -43,6 +44,7 @@ const methods = {
 		} else {
 			filter.addSort('timestamp', -1)
 		}
+
 		if (limit) {
 			filter.setLimit(parseInt(limit))
 		}

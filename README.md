@@ -24,4 +24,8 @@ GET /jobs
 PUT /jobs/job-name { "filter": ... }
 POST /jobs/job-name/trigger # Trigger manually
 DELETE /jobs/job-name
+
+GET /forecasts?type=daily|hourly&location=1234&fields=windSpeed,tempLow&from=2016-12-01&to=2016-12-31&limit=10&order=-tempLow
+GET /forecastLocations
+GET /forecastLocations/1234
 ```

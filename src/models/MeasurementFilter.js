@@ -1,11 +1,11 @@
 const Promise = require('bluebird')
 const moment = require('moment-timezone')
-const BaseModel = require('./Base')
+const FilterModel = require('./Filter')
 const DeviceGroupModel = require('./DeviceGroup')
 
 const aggregators = ['sum', 'avg', 'min', 'max', 'count', 'std', 'varience']
 
-class MeasurementFilterModel extends BaseModel {
+class MeasurementFilterModel extends FilterModel {
 	setDevices (deviceIDs) {
 		if ( ! Array.isArray(deviceIDs)) throw new Error('Invalid device IDs.')
 
@@ -45,9 +45,6 @@ class MeasurementFilterModel extends BaseModel {
 		this.set('fields', fields)
 		return this
 	}
-	getFields () {
-		return this.get('fields') || []
-	}
 	setInterval (interval) {
 		interval = Math.round(interval)
 
@@ -64,49 +61,10 @@ class MeasurementFilterModel extends BaseModel {
 	getInterval () {
 		return this.get('interval')
 	}
-	setFrom (date) {
-		if ( ! (date instanceof moment) || ! date.isValid()) throw new Error('Invalid from date.')
-
-		this.set('from', date)
-		return this
-	}
-	getFrom () {
-		return this.get('from')
-	}
-	setTo (date) {
-		if ( ! (date instanceof moment) || ! date.isValid()) throw new Error('Invalid to date.')
-
-		this.set('to', date)
-		return this
-	}
-	getTo () {
-		return this.get('to')
-	}
-	addSort (name, order = 1) {
-		if ( ! this.getFields().find((field) => field.column === name)) {
+	checkSortField (name) {
+		if ( ! this.getFields().find(({ column }) => column === name)) {
 			throw new Error(`Unable to sort on missing field "${name}".`)
 		}
-
-		var sort = this.getSorting()
-		sort.push({ name, order })
-		this.set('sort', sort)
-		return this
-	}
-	getSorting () {
-		return this.get('sort') || []
-	}
-	setLimit (limit) {
-		limit = Math.round(limit)
-
-		if (isNaN(limit) || typeof limit !== 'number') {
-			throw new Error('Invalid limit.')
-		}
-
-		this.set('limit', limit)
-		return this
-	}
-	getLimit () {
-		return this.get('limit')
 	}
 
 	serialize () {
@@ -116,17 +74,14 @@ class MeasurementFilterModel extends BaseModel {
 	}
 
 	toJSON () {
-		return {
-			devices: this.getDevices(),
-			device_groups: this.getDeviceGroups().map((group) => group.id),
-			all_device_ids: this.getAllDeviceIDs(),
-			fields: this.getFields(),
-			interval: this.getInterval(),
-			from: this.getFrom().toISOString(),
-			to: this.getTo().toISOString(),
-			sort: this.getSorting(),
-			limit: this.getLimit(),
-		}
+		var data = super.toJSON()
+
+		data.devices = this.getDevices()
+		data.device_groups = this.getDeviceGroups().map((group) => group.id)
+		data.all_device_ids = this.getAllDeviceIDs()
+		data.interval = this.getInterval()
+
+		return data
 	}
 }
 

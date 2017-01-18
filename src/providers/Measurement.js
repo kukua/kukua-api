@@ -14,7 +14,7 @@ const methods = {
 		var deviceIDs = filter.getAllDeviceIDs()
 
 		if (deviceIDs.length === 0) {
-			return resolve(new MeasurementListModel(filter, providers))
+			return resolve(new MeasurementListModel({ filter, items: [] }, providers))
 		}
 
 		providers('device').find({ id: deviceIDs })
@@ -67,7 +67,7 @@ const methods = {
 				)).join('UNION ALL')
 
 				var sql = `
-					SELECT ${selects.join(', ')}
+					SELECT ${selects.join(',')}
 					FROM (${tables}) AS t
 					GROUP BY UNIX_TIMESTAMP(timestamp) - UNIX_TIMESTAMP(timestamp) % ${filter.getInterval()}
 					${order}
