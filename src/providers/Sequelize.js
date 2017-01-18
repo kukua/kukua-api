@@ -15,7 +15,9 @@ const methods = {
 			if (env !== 'production') {
 				if (typeof logger !== 'function') {
 					var log = providers('log').child({ type: 'sequelize' })
-					logger = (sql) => log.debug({ database }, sql)
+					logger = (sql) => {
+						log.debug({ database }, sql.replace(/Executing \(\w+\): /, ''))
+					}
 				}
 
 				logging = logger
