@@ -1,7 +1,6 @@
 const _ = require('underscore')
 const Promise = require('bluebird')
 const BaseProvider = require('./Base')
-const { ForecastLocation } = require('./sequelizeModels/')
 const ForecastLocationModel = require('../models/ForecastLocation')
 const { NotFoundError } = require('../helpers/errors')
 
@@ -10,7 +9,9 @@ class ForecastLocationProvider extends BaseProvider {
 		super(providerFactory)
 
 		this._ForecastLocationModel = ForecastLocationModel
-		this._ForecastLocation = ForecastLocation
+
+		var sequelizeModel = this.getProvider('sequelizeModel')
+		this._ForecastLocation = sequelizeModel.getModel('ForecastLocation')
 	}
 
 	_createModel (location) {

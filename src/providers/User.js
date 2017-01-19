@@ -3,15 +3,16 @@ const TwinBCrypt = require('twin-bcrypt')
 const BaseProvider = require('./Base')
 const UserModel = require('../models/User')
 const { UnauthorizedError, NotFoundError } = require('../helpers/errors')
-const { User, UserToken } = require('./sequelizeModels/')
 
 class UserProvider extends BaseProvider {
 	constructor (providerFactory) {
 		super(providerFactory)
 
 		this._UserModel = UserModel
-		this._User = User
-		this._UserToken = UserToken
+
+		var sequelizeModel = this.getProvider('sequelizeModel')
+		this._User = sequelizeModel.getModel('User')
+		this._UserToken = sequelizeModel.getModel('UserToken')
 	}
 
 	_createModel (user) {

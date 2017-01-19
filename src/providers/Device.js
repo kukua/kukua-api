@@ -2,7 +2,6 @@ const _ = require('underscore')
 const Promise = require('bluebird')
 const BaseProvider = require('./Base')
 const DeviceModel = require('../models/Device')
-const { Device, DeviceLabel } = require('./sequelizeModels/')
 const { NotFoundError } = require('../helpers/errors')
 
 class DeviceProvider extends BaseProvider {
@@ -11,8 +10,10 @@ class DeviceProvider extends BaseProvider {
 
 		this._locationLabels = ['altitude_meters', 'country', 'longitude', 'latitude', 'timezone']
 		this._DeviceModel = DeviceModel
-		this._Device = Device
-		this._DeviceLabel = DeviceLabel
+
+		var sequelizeModel = this.getProvider('sequelizeModel')
+		this._Device = sequelizeModel.getModel('Device')
+		this._DeviceLabel = sequelizeModel.getModel('DeviceLabel')
 	}
 
 	_createModel (device) {

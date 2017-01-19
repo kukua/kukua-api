@@ -2,15 +2,16 @@ const Promise = require('bluebird')
 const BaseProvider = require('./Base')
 const TemplateModel = require('../models/Template')
 const DeviceModel = require('../models/Device')
-const { Template, Attribute } = require('./sequelizeModels/')
 
 class TemplateProvider extends BaseProvider {
 	constructor (providerFactory) {
 		super(providerFactory)
 
 		this._DeviceModel = DeviceModel
-		this._Template = Template
-		this._Attribute = Attribute
+
+		var sequelizeModel = this.getProvider('sequelizeModel')
+		this._Template = sequelizeModel.getModel('Template')
+		this._Attribute = sequelizeModel.getModel('Attribute')
 	}
 
 	_createModel (template) {
