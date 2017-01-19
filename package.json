@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "dotenv": "~2.0.0",
-    "jasmine": "~2.5.2"
+    "jasmine": "~2.5.2",
+    "supertest": "~2.0.1"
   }
 }
