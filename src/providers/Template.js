@@ -1,29 +1,42 @@
 const Promise = require('bluebird')
-const providers = require('./')
+const BaseProvider = require('./Base')
 const TemplateModel = require('../models/Template')
 const DeviceModel = require('../models/Device')
 const { Template, Attribute } = require('./sequelizeModels/')
 
-const methods = {
+class TemplateProvider extends BaseProvider {
+	constructor (providerFactory) {
+		super(providerFactory)
+
+		this._DeviceModel = DeviceModel
+		this._Template = Template
+		this._Attribute = Attribute
+	}
+
 	_createModel (template) {
 		var attr = template.get()
 
 		attr.attributes = attr.attributes.map((attribute) => attribute.name)
 
-		return new TemplateModel(attr, providers)
-	},
-	findByDevice: (device) => new Promise((resolve, reject) => {
-		if ( ! (device instanceof DeviceModel)) return reject('Invalid Device given.')
+		return new (TemplateModel)(attr, this._getProviderFactory())
+	}
 
-		Template.findById(device.get('template_id'), {
-			include: {
-				model: Attribute,
-				required: false,
-			},
+	findByDevice (device) {
+		return new Promise((resolve, reject) => {
+			if ( ! (device instanceof this._DeviceModel)) {
+				return reject('Invalid Device given.')
+			}
+
+			this._Template.findById(device.get('template_id'), {
+				include: {
+					model: this._Attribute,
+					required: false,
+				},
+			})
+				.then((template) => resolve(this._createModel(template)))
+				.catch(reject)
 		})
-			.then((template) => resolve(methods._createModel(template)))
-			.catch(reject)
-	}),
+	}
 }
 
-module.exports = methods
+module.exports = TemplateProvider

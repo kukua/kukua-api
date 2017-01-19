@@ -1,9 +1,13 @@
-const providers = require('./')
+const BaseProvider = require('./Base')
 const { NotFoundError } = require('../helpers/errors')
 
-const missingHeader = 'Missing token. Please provide "X-Auth-Token: {token}" header.'
+class AuthProvider extends BaseProvider {
+	constructor (providerFactory) {
+		super(providerFactory)
 
-const methods = {
+		this._missingHeader = 'Missing token. Please provide "X-Auth-Token: {token}" header.'
+	}
+
 	loginUser (req, res, user) {
 		if ( ! user.get('is_active')) {
 			res.status(401).error('This account has been disabled.')
@@ -17,21 +21,26 @@ const methods = {
 		res.setHeader('X-User-ID', user.id)
 		req.session.user = user
 		return true
-	},
-	middleware (req, res, next) {
+	}
+
+	get middleware () {
+		return this._middleware.bind(this)
+	}
+
+	_middleware (req, res, next) {
 		var token = req.headers['x-auth-token']
 
-		if ( ! token) return res.status(401).error(missingHeader)
+		if ( ! token) return res.status(401).error(this._missingHeader)
 
-		providers('user').findByToken(token.toLowerCase())
+		this._getProvider('user').findByToken(token.toLowerCase())
 			.then((user) => {
-				if ( ! methods.loginUser(req, res, user)) return
+				if ( ! this.loginUser(req, res, user)) return
 				next()
 			})
 			.catch(NotFoundError, () => {
 				res.status(401).error('Invalid authentication token.')
 			})
-	},
+	}
 }
 
-module.exports = methods
+module.exports = AuthProvider

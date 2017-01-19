@@ -1,11 +1,21 @@
 const moment = require('moment-timezone')
 const parseDuration = require('parse-duration')
-const providers = require('./')
+const BaseProvider = require('./Base')
 const MeasurementFilterModel = require('../models/MeasurementFilter')
 
-const methods = {
+class MeasurementFilterProvider extends BaseProvider {
+	constructor (providerFactory) {
+		super(providerFactory)
+
+		this._MeasurementFilterModel = MeasurementFilterModel
+	}
+
+	_createModel () {
+		return new (this._MeasurementFilterModel)({}, this._getProviderFactory())
+	}
+
 	fromRequest (req) {
-		var filter = new MeasurementFilterModel({}, providers)
+		var filter = this._createModel()
 		var { fields, interval, from, to, sort, limit } = req.query
 
 		filter.addField('timestamp')
@@ -50,7 +60,7 @@ const methods = {
 		}
 
 		return filter
-	},
+	}
 }
 
-module.exports = methods
+module.exports = MeasurementFilterProvider

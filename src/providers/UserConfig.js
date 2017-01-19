@@ -1,24 +1,36 @@
 const path = require('path')
 const Promise = require('bluebird')
 const Datastore = require('nedb')
-const providers = require('./')
+const BaseProvider = require('./Base')
 const UserModel = require('../models/User')
 const UserConfigModel = require('../models/UserConfig')
 
-const db = new Datastore({
-	filename: path.resolve(process.env.USER_CONFIG_DB_PATH),
-	autoload: true,
-	timestampData: true,
-})
+class UserConfigProvider extends BaseProvider {
+	constructor (providerFactory) {
+		super(providerFactory)
 
-db.ensureIndex({ fieldName: 'id' }, (err) => {
-	if (err) throw new Error(err)
-})
-db.ensureIndex({ fieldName: 'userID' }, (err) => {
-	if (err) throw new Error(err)
-})
+		this._UserConfigModel = UserConfigModel
+		this._UserModel = UserModel
 
-const methods = {
+		var filePath = path.resolve(process.env.USER_CONFIG_DB_PATH)
+		this.create(filePath)
+	}
+
+	create (filePath) {
+		var db = this._db = new Datastore({
+			filename: filePath,
+			autoload: true,
+			timestampData: true,
+		})
+
+		db.ensureIndex({ fieldName: 'id' }, (err) => {
+			if (err) throw new Error(err)
+		})
+		db.ensureIndex({ fieldName: 'userID' }, (err) => {
+			if (err) throw new Error(err)
+		})
+	}
+
 	_createModel (item) {
 		var attr = {
 			id: item.id,
@@ -28,55 +40,74 @@ const methods = {
 			updated_at: item.updatedAt,
 		}
 
-		return new UserConfigModel(attr, providers)
-	},
+		return new (this._UserConfigModel)(attr, this._getProviderFactory())
+	}
 	_createConfig (items) {
 		var config = {}
 		items.forEach((item) => config[item.id] = item)
 		return config
-	},
-	findByUser: (user) => new Promise((resolve, reject) => {
-		if ( ! (user instanceof UserModel)) return reject('Invalid User given.')
+	}
 
-		db.find({ userID: user.id }, (err, items) => {
-			if (err) return reject(err)
-			resolve(methods._createConfig(items.map((item) => methods._createModel(item))))
+	findByUser (user) {
+		return new Promise((resolve, reject) => {
+			if ( ! (user instanceof this._UserModel)) {
+				return reject('Invalid User given.')
+			}
+
+			this._db.find({ userID: user.id }, (err, items) => {
+				if (err) return reject(err)
+				resolve(this._createConfig(items.map((item) => this._createModel(item))))
+			})
 		})
-	}),
-	updateForUser: (user, id, data) => new Promise((resolve, reject) => {
-		if ( ! (user instanceof UserModel)) return reject('Invalid User given.')
-		if (typeof id !== 'string') return reject('Invalid config key given.')
-		if (typeof data !== 'object') return reject('Invalid data object given.')
-
-		var userID = user.id
-
-		db.update(
-			{ id, userID },
-			{ $set: {
-				id,
-				userID,
-				value: data.value,
-			} },
-			{ upsert: true },
-			(err /*, numReplaced, item*/) => {
-				if (err) return reject(err)
-				resolve()
+	}
+	updateForUser (user, id, data) {
+		return new Promise((resolve, reject) => {
+			if ( ! (user instanceof this._UserModel)) {
+				return reject('Invalid User given.')
 			}
-		)
-	}),
-	removeByUserAndID: (user, id) => new Promise((resolve, reject) => {
-		if ( ! (user instanceof UserModel)) return reject('Invalid User given.')
-		if (typeof id !== 'string') return reject('Invalid config key given.')
-
-		db.remove(
-			{ id, userID: user.id },
-			{},
-			(err /*, numRemoved*/) => {
-				if (err) return reject(err)
-				resolve()
+			if (typeof id !== 'string') {
+				return reject('Invalid config key given.')
 			}
-		)
-	}),
+			if (typeof data !== 'object') {
+				return reject('Invalid data object given.')
+			}
+
+			var userID = user.id
+
+			this._db.update(
+				{ id, userID },
+				{ $set: {
+					id,
+					userID,
+					value: data.value,
+				} },
+				{ upsert: true },
+				(err /*, numReplaced, item*/) => {
+					if (err) return reject(err)
+					resolve()
+				}
+			)
+		})
+	}
+	removeByUserAndID (user, id) {
+		return new Promise((resolve, reject) => {
+			if ( ! (user instanceof this._UserModel)) {
+				return reject('Invalid User given.')
+			}
+			if (typeof id !== 'string') {
+				return reject('Invalid config key given.')
+			}
+
+			this._db.remove(
+				{ id, userID: user.id },
+				{},
+				(err /*, numRemoved*/) => {
+					if (err) return reject(err)
+					resolve()
+				}
+			)
+		})
+	}
 }
 
-module.exports = methods
+module.exports = UserConfigProvider

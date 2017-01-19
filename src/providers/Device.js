@@ -1,15 +1,20 @@
 const _ = require('underscore')
 const Promise = require('bluebird')
-const providers = require('./')
+const BaseProvider = require('./Base')
 const DeviceModel = require('../models/Device')
 const { Device, DeviceLabel } = require('./sequelizeModels/')
 const { NotFoundError } = require('../helpers/errors')
 
-const isValidID = (id) => (typeof id === 'string' && id.match(/^[a-f0-9]{16}$/))
+class DeviceProvider extends BaseProvider {
+	constructor (providerFactory) {
+		super(providerFactory)
 
-const locationLabels = ['altitude_meters', 'country', 'longitude', 'latitude', 'timezone']
+		this._locationLabels = ['altitude_meters', 'country', 'longitude', 'latitude', 'timezone']
+		this._DeviceModel = DeviceModel
+		this._Device = Device
+		this._DeviceLabel = DeviceLabel
+	}
 
-const methods = {
 	_createModel (device) {
 		var attr = device.get()
 
@@ -32,14 +37,18 @@ const methods = {
 			labels[key] = value
 		})
 
-		locationLabels.forEach((key) => {
+		this._locationLabels.forEach((key) => {
 			attr.location[key] = (labels[key] !== undefined ? labels[key] : null)
 		})
 
 		delete attr.labels
 
-		return new DeviceModel(attr, providers)
-	},
+		return new (this._DeviceModel)(attr, this._getProviderFactory())
+	}
+
+	isValidID (id) {
+		return (typeof id === 'string' && id.match(/^[a-f0-9]{16}$/))
+	}
 	getRequestedIDs (req) {
 		// &devices=abcdef0123456789,...
 		return _.chain((req.query.devices || '').split(','))
@@ -48,49 +57,55 @@ const methods = {
 			.filter((id) => id.match(/^[a-f0-9]{16}$/))
 			.uniq()
 			.value()
-	},
-	find: (options = {}) => new Promise((resolve, reject) => {
-		var where = {}
+	}
+	find (options = {}) {
+		return new Promise((resolve, reject) => {
+			var where = {}
 
-		if (Array.isArray(options.id)) {
-			where.udid = { $in: options.id }
-		}
-		if (typeof options.template_id === 'number') {
-			where.template_id = options.template_id
-		}
+			if (Array.isArray(options.id)) {
+				where.udid = { $in: options.id }
+			}
+			if (typeof options.template_id === 'number') {
+				where.template_id = options.template_id
+			}
 
-		Device.findAll({
-			where,
-			include: {
-				model: DeviceLabel,
-				as: 'labels',
-				required: false,
-			},
-		})
-			.then((devices) => devices.map((device) => methods._createModel(device)))
-			.then(resolve)
-			.catch(reject)
-	}),
-	findByID: (id) => new Promise((resolve, reject) => {
-		if ( ! isValidID(id)) return reject('Invalid device ID.')
-
-		Device.findOne({
-			where: {
-				udid: id,
-			},
-			include: {
-				model: DeviceLabel,
-				as: 'labels',
-				required: false,
-			},
-		})
-			.then((device) => {
-				if ( ! device) throw new NotFoundError()
-				return methods._createModel(device)
+			this._Device.findAll({
+				where,
+				include: {
+					model: this._DeviceLabel,
+					as: 'labels',
+					required: false,
+				},
 			})
-			.then(resolve)
-			.catch(reject)
-	}),
+				.then((devices) => devices.map((device) => this._createModel(device)))
+				.then(resolve)
+				.catch(reject)
+		})
+	}
+	findByID (id) {
+		return new Promise((resolve, reject) => {
+			if ( ! this.isValidID(id)) {
+				return reject('Invalid device ID.')
+			}
+
+			this._Device.findOne({
+				where: {
+					udid: id,
+				},
+				include: {
+					model: this._DeviceLabel,
+					as: 'labels',
+					required: false,
+				},
+			})
+				.then((device) => {
+					if ( ! device) throw new NotFoundError()
+					return this._createModel(device)
+				})
+				.then(resolve)
+				.catch(reject)
+		})
+	}
 }
 
-module.exports = methods
+module.exports = DeviceProvider

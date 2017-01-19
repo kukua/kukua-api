@@ -1,10 +1,20 @@
 const moment = require('moment-timezone')
-const providers = require('./')
+const BaseProvider = require('./Base')
 const ForecastFilterModel = require('../models/ForecastFilter')
 
-const methods = {
+class ForecastFilterProvider extends BaseProvider {
+	constructor (providerFactory) {
+		super(providerFactory)
+
+		this._ForecastFilterModel = ForecastFilterModel
+	}
+
+	_createModel () {
+		return new (this._ForecastFilterModel)({}, this._getProviderFactory())
+	}
+
 	fromRequest (req) {
-		var filter = new ForecastFilterModel({}, providers)
+		var filter = this._createModel()
 		var { type, location, fields, from, to, sort, limit } = req.query
 
 		if (type) {
@@ -40,7 +50,7 @@ const methods = {
 		}
 
 		return filter
-	},
+	}
 }
 
-module.exports = methods
+module.exports = ForecastFilterProvider

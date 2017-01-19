@@ -4,21 +4,33 @@ const Promise = require('bluebird')
 const Datastore = require('nedb')
 const slugify = require('underscore.string/slugify')
 const humanize = require('underscore.string/humanize')
-const providers = require('./')
+const BaseProvider = require('./Base')
 const DeviceGroupModel = require('../models/DeviceGroup')
 const DeviceModel = require('../models/Device')
 
-const db = new Datastore({
-	filename: path.resolve(process.env.DEVICE_GROUPS_DB_PATH),
-	autoload: true,
-	timestampData: true,
-})
+class DeviceGroupProvider extends BaseProvider {
+	constructor (providerFactory) {
+		super(providerFactory)
 
-db.ensureIndex({ fieldName: 'id', unique: true }, (err) => {
-	if (err) throw new Error(err)
-})
+		this._DeviceGroupModel = DeviceGroupModel
+		this._DeviceModel = DeviceModel
 
-const methods = {
+		var filePath = path.resolve(process.env.DEVICE_GROUPS_DB_PATH)
+		this.create(filePath)
+	}
+
+	create (filePath) {
+		var db = this._db = new Datastore({
+			filename: filePath,
+			autoload: true,
+			timestampData: true,
+		})
+
+		db.ensureIndex({ fieldName: 'id', unique: true }, (err) => {
+			if (err) throw new Error(err)
+		})
+	}
+
 	_createModel (group) {
 		var attr = {
 			id: group.id,
@@ -28,8 +40,8 @@ const methods = {
 			updated_at: group.updatedAt,
 		}
 
-		return new DeviceGroupModel(attr, providers)
-	},
+		return new (this._DeviceGroupModel)(attr, this._getProviderFactory())
+	}
 
 	getRequestedIDs (req) {
 		// &device_groups=country1,country2,...
@@ -39,7 +51,7 @@ const methods = {
 			.filter((id) => id.match(/^[\da-z\-]+$/))
 			.uniq()
 			.value()
-	},
+	}
 	getDeviceIDs (groups, deviceIDs) {
 		return _.chain(groups)
 			.map((group) => group.get('devices'))
@@ -47,57 +59,79 @@ const methods = {
 			.concat(deviceIDs) // Add other
 			.uniq()
 			.value()
-	},
-	find: () => new Promise((resolve, reject) => {
-		db.find({}).sort({ name: 1 }).exec((err, groups) => {
-			if (err) return reject(err)
-			resolve(groups.map((group) => methods._createModel(group)))
-		})
-	}),
-	findByID: (id) => new Promise((resolve, reject) => {
-		if (slugify(id) !== id) return reject('Invalid group ID given (lowercase slug required).')
-
-		db.findOne({ id }).sort({ name: 1 }).exec((err, group) => {
-			if (err) return reject(err)
-			resolve(methods._createModel(group))
-		})
-	}),
-	findByDevice: (device) => new Promise((resolve, reject) => {
-		if ( ! (device instanceof DeviceModel)) return reject('Invalid Device given.')
-
-		db.find({ devices: device.id }, (err, groups) => {
-			if (err) return reject(err)
-			resolve(groups.map((group) => methods._createModel(group)))
-		})
-	}),
-	addDeviceToGroup: (device, id) => new Promise((resolve, reject) => {
-		if ( ! (device instanceof DeviceModel)) return reject('Invalid Device given.')
-		if (slugify(id) !== id) return reject('Invalid group ID given (lowercase slug required).')
-
-		db.update(
-			{ id },
-			{ $set: { name: humanize(id) }, $addToSet: { devices: device.id } },
-			{ upsert: true },
-			(err /*, numReplaced, group*/) => {
+	}
+	find () {
+		return new Promise((resolve, reject) => {
+			this._db.find({}).sort({ name: 1 }).exec((err, groups) => {
 				if (err) return reject(err)
-				resolve()
+				resolve(groups.map((group) => this._createModel(group)))
+			})
+		})
+	}
+	findByID (id) {
+		return new Promise((resolve, reject) => {
+			if (slugify(id) !== id) {
+				return reject('Invalid group ID given (lowercase slug required).')
 			}
-		)
-	}),
-	removeDeviceFromGroup: (device, id) => new Promise((resolve, reject) => {
-		if ( ! (device instanceof DeviceModel)) return reject('Invalid Device given.')
-		if (slugify(id) !== id) return reject('Invalid group ID given (lowercase slug required).')
 
-		db.update(
-			{ id },
-			{ $set: { name: humanize(id) }, $pull: { devices: device.id } },
-			{ upsert: true },
-			(err /*, numReplaced, group*/) => {
+			this._db.findOne({ id }).sort({ name: 1 }).exec((err, group) => {
 				if (err) return reject(err)
-				resolve()
+				resolve(this._createModel(group))
+			})
+		})
+	}
+	findByDevice (device) {
+		return new Promise((resolve, reject) => {
+			if ( ! (device instanceof this._DeviceModel)) {
+				return reject('Invalid Device given.')
 			}
-		)
-	}),
+
+			this._db.find({ devices: device.id }, (err, groups) => {
+				if (err) return reject(err)
+				resolve(groups.map((group) => this._createModel(group)))
+			})
+		})
+	}
+	addDeviceToGroup (device, id) {
+		return new Promise((resolve, reject) => {
+			if ( ! (device instanceof this._DeviceModel)) {
+				return reject('Invalid Device given.')
+			}
+			if (slugify(id) !== id) {
+				return reject('Invalid group ID given (lowercase slug required).')
+			}
+
+			this._db.update(
+				{ id },
+				{ $set: { name: humanize(id) }, $addToSet: { devices: device.id } },
+				{ upsert: true },
+				(err /*, numReplaced, group*/) => {
+					if (err) return reject(err)
+					resolve()
+				}
+			)
+		})
+	}
+	removeDeviceFromGroup (device, id) {
+		return new Promise((resolve, reject) => {
+			if ( ! (device instanceof this._DeviceModel)) {
+				return reject('Invalid Device given.')
+			}
+			if (slugify(id) !== id) {
+				return reject('Invalid group ID given (lowercase slug required).')
+			}
+
+			this._db.update(
+				{ id },
+				{ $set: { name: humanize(id) }, $pull: { devices: device.id } },
+				{ upsert: true },
+				(err /*, numReplaced, group*/) => {
+					if (err) return reject(err)
+					resolve()
+				}
+			)
+		})
+	}
 }
 
-module.exports = methods
+module.exports = DeviceGroupProvider

@@ -1,12 +1,15 @@
 const Sequelize = require('sequelize')
-const providers = require('./')
+const BaseProvider = require('./Base')
 
-const methods = {
-	_instances: {}, // Singletons
-	forDB (database, env, logger) {
-		var instances = methods._instances
+class SequelizeProvider extends BaseProvider {
+	constructor (providerFactory) {
+		super(providerFactory)
 
-		if ( ! instances[database]) {
+		this._instances = {} // Singletons
+	}
+
+	forDB (database, env = null, logger = null) {
+		if ( ! this._instances[database]) {
 			var logging = false
 
 			if ( ! env) {
@@ -14,7 +17,7 @@ const methods = {
 			}
 			if (env !== 'production') {
 				if (typeof logger !== 'function') {
-					var log = providers('log').child({ type: 'sequelize' })
+					var log = this._getProvider('log').child({ type: 'sequelize' })
 					logger = (sql) => {
 						log.debug({ database }, sql.replace(/Executing \(\w+\): /, ''))
 					}
@@ -23,19 +26,24 @@ const methods = {
 				logging = logger
 			}
 
-			instances[database] = new Sequelize(database, process.env.MYSQL_USER, process.env.MYSQL_PASSWORD, {
-				host: process.env.MYSQL_HOST,
-				dialect: 'mysql',
-				define: {
-					timestamps: true, // Updating timestamps is done by PostgreSQL triggers
-					underscored: true, // Use created_at and updated_at
-				},
-				logging,
-			})
+			this._instances[database] = new Sequelize(
+				database,
+				process.env.MYSQL_USER,
+				process.env.MYSQL_PASSWORD,
+				{
+					host: process.env.MYSQL_HOST,
+					dialect: 'mysql',
+					define: {
+						timestamps: true, // Updating timestamps is done by PostgreSQL triggers
+						underscored: true, // Use created_at and updated_at
+					},
+					logging,
+				}
+			)
 		}
 
-		return instances[database]
-	},
+		return this._instances[database]
+	}
 }
 
-module.exports = methods
+module.exports = SequelizeProvider

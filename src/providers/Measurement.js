@@ -1,85 +1,111 @@
 const _ = require('underscore')
 const Promise = require('bluebird')
-const providers = require('./')
+const BaseProvider = require('./Base')
 const MeasurementFilterModel = require('../models/MeasurementFilter')
 const MeasurementListModel = require('../models/MeasurementList')
 const fields = require('../config/fields')
 
-const sequelize = providers('sequelize').forDB('measurements')
+class MeasurementProvider extends BaseProvider {
+	constructor (providerFactory) {
+		super(providerFactory)
 
-const methods = {
-	findByFilter: (filter) => new Promise((resolve, reject) => {
-		if ( ! (filter instanceof MeasurementFilterModel)) return reject('Invalid measurement filter.')
+		this._MeasurementFilterModel = MeasurementFilterModel
+		this._MeasurementListModel = MeasurementListModel
+		this._fields = fields
+	}
 
-		var deviceIDs = filter.getAllDeviceIDs()
+	_createModel (filter, items = []) {
+		return new (this._MeasurementListModel)({ filter, items }, this._getProviderFactory())
+	}
 
-		if (deviceIDs.length === 0) {
-			return resolve(new MeasurementListModel({ filter, items: [] }, providers))
-		}
+	findByFilter (filter) {
+		return new Promise((resolve, reject) => {
+			if ( ! (filter instanceof this._MeasurementFilterModel)) {
+				return reject('Invalid measurement filter.')
+			}
 
-		providers('device').find({ id: deviceIDs })
-			.then((devices) => (
-				Promise.all(devices.map((device) => device.load('template')))
-					.then(() => devices.map((device) => device.get('template').get('attributes')))
-			))
-			.then((attributes) => {
-				// Check if all devices support requested fields
-				var uncommon = (attributes.length > 1 ? _.difference(...attributes) : [])
-				var unsupported = []
+			var deviceIDs = filter.getAllDeviceIDs()
 
-				_.pluck(filter.getFields(), 'name').forEach((name) => {
-					if (uncommon.indexOf(name) === -1) return
-					unsupported.push(name)
-				})
+			if (deviceIDs.length === 0) {
+				return resolve(this._createModel(filter))
+			}
 
-				if (unsupported.length > 0) {
-					throw new Error('Fields not supported by all devices: ' + unsupported.join(', '))
-				}
-			})
-			.then(() => {
-				var columns = []
-				var selects = []
-				filter.getFields().forEach(({ name, column, aggregator }) => {
-					if ( ! fields[name]) {
-						throw new Error(`Field "${name}" not supported by template.`)
+			this._getProvider('device').find({ id: deviceIDs })
+				.then((devices) => (
+					Promise.all(devices.map((device) => device.load('template')))
+						.then(() => devices.map((device) => device.get('template').get('attributes')))
+				))
+				.then((attributes) => {
+					// Check if all devices support requested fields
+					var uncommon = (attributes.length > 1 ? _.difference(...attributes) : [])
+					var unsupported = []
+
+					_.pluck(filter.getFields(), 'name').forEach((name) => {
+						if (uncommon.indexOf(name) === -1) return
+						unsupported.push(name)
+					})
+
+					if (unsupported.length > 0) {
+						throw new Error('Fields not supported by all devices: ' + unsupported.join(', '))
 					}
-
-					columns.push(name)
-					selects.push(fields[name](filter, aggregator, column))
 				})
-				columns = _.uniq(columns)
+				.then(() => {
+					// Determine if all requested fields are supported and create column SELECT SQL queries
+					var columns = []
+					var selects = []
 
-				var from = filter.getFrom()
-				var to = filter.getTo()
-				var where = ''
-				if (from) where += `timestamp >= '${from.toISOString()}'`
-				if (to) where += `${where ? ' AND ' : ''} timestamp <= '${to.toISOString()}'`
-				if (where) where = 'WHERE ' + where
+					filter.getFields().forEach(({ name, column, aggregator }) => {
+						if ( ! this._fields[name]) {
+							throw new Error(`Field "${name}" not supported by template.`)
+						}
 
-				var order = ''
-				var sorting = filter.getSorting().map(({ name, order }) => `\`${name}\` ${order > 0 ? 'ASC' : 'DESC'}`)
-				if (sorting.length) order = 'ORDER BY ' + sorting.join(', ')
+						columns.push(name)
+						selects.push(this._fields[name](filter, aggregator, column))
+					})
 
-				var limit = (filter.getLimit() ? `LIMIT ${filter.getLimit()}` : '')
+					columns = _.uniq(columns)
+					return { columns, selects }
+				})
+				.then(({ columns, selects }) => {
+					// Create SQL query
+					var from = filter.getFrom()
+					var to = filter.getTo()
+					var where = ''
+					if (from) where += `timestamp >= '${from.toISOString()}'`
+					if (to) where += `${where ? ' AND ' : ''} timestamp <= '${to.toISOString()}'`
+					if (where) where = 'WHERE ' + where
 
-				var tables = deviceIDs.map((id) => (
-					`(SELECT \`${columns.join('`, `')}\` FROM \`${id}\` ${where})`
-				)).join('UNION ALL')
+					var order = ''
+					var sorting = filter.getSorting().map(({ name, order }) => (
+						`\`${name}\` ${order > 0 ? 'ASC' : 'DESC'}`
+					))
+					if (sorting.length) order = 'ORDER BY ' + sorting.join(', ')
 
-				var sql = `
-					SELECT ${selects.join(',')}
-					FROM (${tables}) AS t
-					GROUP BY UNIX_TIMESTAMP(timestamp) - UNIX_TIMESTAMP(timestamp) % ${filter.getInterval()}
-					${order}
-					${limit}
-				`.replace(/\t/g, '')
+					var limit = (filter.getLimit() ? `LIMIT ${filter.getLimit()}` : '')
 
-				sequelize.query(sql, { type: sequelize.QueryTypes.SELECT })
-					.then((items) => new MeasurementListModel({ filter, items }, providers))
-					.then(resolve, reject)
-			})
-			.catch(reject)
-	}),
+					var tables = deviceIDs.map((id) => (
+						`(SELECT \`${columns.join('`, `')}\` FROM \`${id}\` ${where})`
+					)).join('UNION ALL')
+
+					return `
+						SELECT ${selects.join(',')}
+						FROM (${tables}) AS t
+						GROUP BY UNIX_TIMESTAMP(timestamp) - UNIX_TIMESTAMP(timestamp) % ${filter.getInterval()}
+						${order}
+						${limit}
+					`.replace(/\t/g, '')
+				})
+				.then((sql) => {
+					// Run SQL query
+					var sequelize = this._getProvider('sequelize').forDB('measurements')
+
+					sequelize.query(sql, { type: sequelize.QueryTypes.SELECT })
+						.then((items) => this._createModel(filter, items))
+						.then(resolve)
+				})
+				.catch(reject)
+		})
+	}
 }
 
-module.exports = methods
+module.exports = MeasurementProvider
