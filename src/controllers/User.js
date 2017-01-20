@@ -10,6 +10,11 @@ class UserController extends BaseController {
 		app.get('/users/login', this._onLogin.bind(this))
 		app.get('/users/:id(\\d+)', auth.middleware, this._onShow.bind(this))
 		app.put(
+			'/users/:id(\\d+)/permission/:rule([a-zA-Z\\d\\.]+)/:permission(inherit|allow|deny)',
+			auth.middleware,
+			this._onPermissionUpdate.bind(this)
+		)
+		app.put(
 			'/users/:id(\\d+)/config/:configID([\\w\\.]+)',
 			auth.middleware,
 			this._onConfigUpdate.bind(this)
@@ -40,8 +45,19 @@ class UserController extends BaseController {
 	}
 	_onShow (req, res) {
 		this._getProvider('user').findByID(req.params.id)
+			.then((user) => this._canRead(req.session.user, user))
 			.then((user) => this._addIncludes(req, user))
 			.then((user) => res.json(user))
+			.catch((err) => res.error(err))
+	}
+	_onPermissionUpdate (req, res) {
+		this._getProvider('user').findByID(req.params.id)
+			.then((user) => this._getProvider('accessControl').setPermission(
+				user,
+				req.params.rule,
+				req.params.permission
+			))
+			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
 	_onConfigUpdate (req, res) {
@@ -50,12 +66,14 @@ class UserController extends BaseController {
 		var data = { value }
 
 		this._getProvider('user').findByID(req.params.id)
+			.then((user) => this._canUpdate(req.session.user, user))
 			.then((user) => this._getProvider('userConfig').updateForUser(user, req.params.configID, data))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
 	_onConfigRemove (req, res) {
 		this._getProvider('user').findByID(req.params.id)
+			.then((user) => this._canUpdate(req.session.user, user))
 			.then((user) => this._getProvider('userConfig').removeByUserAndID(user, req.params.configID))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))

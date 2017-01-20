@@ -18,7 +18,7 @@ class AuthProvider extends BaseProvider {
 			return false
 		}
 
-		res.setHeader('X-User-ID', user.id)
+		res.setHeader('X-User-Id', user.id)
 		req.session.user = user
 		return true
 	}

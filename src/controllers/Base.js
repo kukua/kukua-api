@@ -27,6 +27,28 @@ class BaseController {
 		return model.load(req.query.includes.split(','))
 			.then(() => model)
 	}
+
+	// Verify CRUD operations
+	_canCreate (user, model) {
+		return this._can(user, model, 'create')
+	}
+	_canRead (user, model) {
+		return this._can(user, model, 'read')
+	}
+	_canUpdate (user, model) {
+		return this._can(user, model, 'update')
+	}
+	_canDelete (user, model) {
+		return this._can(user, model, 'delete')
+	}
+	_can (user, model, right) {
+		if ( ! (model instanceof BaseModel)) return Promise.reject('Invalid model given.')
+
+		var rule = `${model.key}.${right}.${model.id}`
+
+		return this._getProvider('accessControl').can(user, rule)
+			.then(() => model) // Return model so _can can be chained
+	}
 }
 
 module.exports = BaseController

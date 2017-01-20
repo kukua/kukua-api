@@ -7,6 +7,8 @@ class BaseModel {
 		this._providerFactory = providerFactory
 	}
 
+	get key () { throw new Error('Model key getter not implemented.') }
+
 	set (key, value) {
 		if (typeof key === 'object') {
 			this._attributes = key

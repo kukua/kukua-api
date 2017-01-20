@@ -15,6 +15,8 @@ if (process.env.NODE_ENV !== 'production') {
 	log.level('debug')
 }
 
+providers('accessControl') // Preload
+
 const { NotFoundError, InternalServerError } = require('./helpers/errors')
 
 const UserController = require('./controllers/User')

@@ -26,6 +26,7 @@ describe('BaseController', () => {
 			Object.getOwnPropertyNames(BaseController.prototype),
 			[
 				'constructor', '_getProviderFactory', '_getProvider', '_addIncludes',
+				'_canCreate', '_canRead', '_canUpdate', '_canDelete', '_can',
 			]
 		))
 	})
