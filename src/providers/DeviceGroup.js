@@ -7,6 +7,7 @@ const humanize = require('underscore.string/humanize')
 const BaseProvider = require('./Base')
 const DeviceGroupModel = require('../models/DeviceGroup')
 const DeviceModel = require('../models/Device')
+const { NotFoundError } = require('../helpers/errors')
 
 class DeviceGroupProvider extends BaseProvider {
 	constructor (providerFactory) {
@@ -60,9 +61,23 @@ class DeviceGroupProvider extends BaseProvider {
 			.uniq()
 			.value()
 	}
-	find () {
+	getAllIDs () {
 		return new Promise((resolve, reject) => {
 			this._db.find({}).sort({ name: 1 }).exec((err, groups) => {
+				if (err) return reject(err)
+				resolve(groups.map((group) => group.id))
+			})
+		})
+	}
+	find (options = {}) {
+		return new Promise((resolve, reject) => {
+			var where = {}
+
+			if (Array.isArray(options.id)) {
+				where.id = { $in: options.id }
+			}
+
+			this._db.find(where).sort({ name: 1 }).exec((err, groups) => {
 				if (err) return reject(err)
 				resolve(groups.map((group) => this._createModel(group)))
 			})
@@ -76,6 +91,7 @@ class DeviceGroupProvider extends BaseProvider {
 
 			this._db.findOne({ id }).sort({ name: 1 }).exec((err, group) => {
 				if (err) return reject(err)
+				if ( ! group) return reject(new NotFoundError())
 				resolve(this._createModel(group))
 			})
 		})
@@ -92,18 +108,18 @@ class DeviceGroupProvider extends BaseProvider {
 			})
 		})
 	}
-	addDeviceToGroup (device, id) {
+	addDeviceToGroup (device, group) {
 		return new Promise((resolve, reject) => {
 			if ( ! (device instanceof this._DeviceModel)) {
 				return reject('Invalid Device given.')
 			}
-			if (slugify(id) !== id) {
-				return reject('Invalid group ID given (lowercase slug required).')
+			if ( ! (group instanceof this._DeviceGroupModel)) {
+				return reject('Invalid DeviceGroup given.')
 			}
 
 			this._db.update(
-				{ id },
-				{ $set: { name: humanize(id) }, $addToSet: { devices: device.id } },
+				{ id: group.id },
+				{ $set: { name: humanize(group.id) }, $addToSet: { devices: device.id } },
 				{ upsert: true },
 				(err /*, numReplaced, group*/) => {
 					if (err) return reject(err)
@@ -112,18 +128,18 @@ class DeviceGroupProvider extends BaseProvider {
 			)
 		})
 	}
-	removeDeviceFromGroup (device, id) {
+	removeDeviceFromGroup (device, group) {
 		return new Promise((resolve, reject) => {
 			if ( ! (device instanceof this._DeviceModel)) {
 				return reject('Invalid Device given.')
 			}
-			if (slugify(id) !== id) {
-				return reject('Invalid group ID given (lowercase slug required).')
+			if ( ! (group instanceof this._DeviceGroupModel)) {
+				return reject('Invalid DeviceGroup given.')
 			}
 
 			this._db.update(
-				{ id },
-				{ $set: { name: humanize(id) }, $pull: { devices: device.id } },
+				{ id: group.id },
+				{ $set: { name: humanize(group.id) }, $pull: { devices: device.id } },
 				{ upsert: true },
 				(err /*, numReplaced, group*/) => {
 					if (err) return reject(err)

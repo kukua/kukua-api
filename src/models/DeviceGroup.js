@@ -2,6 +2,8 @@ const Promise = require('bluebird')
 const BaseModel = require('./Base')
 
 class DeviceGroupModel extends BaseModel {
+	get key () { return 'deviceGroup' }
+
 	loadDevices () {
 		var deviceIDs = this.get('devices')
 

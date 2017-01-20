@@ -2,6 +2,7 @@ const _ = require('underscore')
 const Promise = require('bluebird')
 const BaseController = require('./Base')
 const DeviceModel = require('../models/Device')
+const { UnauthorizedError } = require('../helpers/errors')
 
 class DeviceController extends BaseController {
 	constructor (app, providerFactory) {
@@ -43,17 +44,17 @@ class DeviceController extends BaseController {
 				var model = new DeviceModel({ id }, providerFactory)
 
 				return this._canRead(user, model)
-					.then(() => id, () => null)
+					.then(() => id)
+					.catch(UnauthorizedError, () => null)
 			})
 
-			return Promise.all(promises)
-				.then((deviceIDs) => _.compact(deviceIDs))
+			return Promise.all(promises).then(_.compact)
 		}
 
 		if (deviceIDs.length > 0) {
 			return filterAccessible(deviceIDs)
 		} else {
-			return this._getProvider('device').getAllDeviceIDs()
+			return this._getProvider('device').getAllIDs()
 				.then(filterAccessible)
 		}
 	}
