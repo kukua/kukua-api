@@ -59,6 +59,16 @@ class DeviceProvider extends BaseProvider {
 			.uniq()
 			.value()
 	}
+	getAllDeviceIDs () {
+		return new Promise((resolve, reject) => {
+			this._Device.findAll({
+				attributes: ['udid'],
+			})
+				.then((devices) => devices.map((device) => device.udid))
+				.then(resolve)
+				.catch(reject)
+		})
+	}
 	find (options = {}) {
 		return new Promise((resolve, reject) => {
 			var where = {}

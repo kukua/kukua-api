@@ -1,6 +1,8 @@
 const BaseModel = require('./Base')
 
 class DeviceModel extends BaseModel {
+	get key () { return 'device' }
+
 	loadGroups () {
 		return this._getProvider('deviceGroup').findByDevice(this)
 			.then((groups) => {

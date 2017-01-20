@@ -17,11 +17,21 @@ describe('DeviceController', () => {
 
 	// Fixtures
 	const app = express()
+
+	express.response.error = console.error.bind(console)
+	app.use((req, res, next) => {
+		req.session = {}
+		next()
+	})
+
 	const deviceId = 'abcdef0123456789'
 	const providers = {}
 	const providerFactory = (name) => providers[name]
 	providers.auth = {
 		middleware: (req, res, next) => next()
+	}
+	providers.accessControl = {
+		can: () => Promise.resolve(),
 	}
 	providers.deviceGroup = {
 		getRequestedIDs: (req) => ['abc'],
@@ -44,7 +54,7 @@ describe('DeviceController', () => {
 			Object.getOwnPropertyNames(DeviceController.prototype),
 			[
 				'constructor', '_getProviderFactory', '_getProvider', '_addIncludes',
-				'_onIndex', '_onShow',
+				'_onIndex', '_onShow', '_getAccessibleDeviceIDs',
 			]
 		))
 	})

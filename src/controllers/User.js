@@ -52,11 +52,9 @@ class UserController extends BaseController {
 	}
 	_onPermissionUpdate (req, res) {
 		this._getProvider('user').findByID(req.params.id)
-			.then((user) => this._getProvider('accessControl').setPermission(
-				user,
-				req.params.rule,
-				req.params.permission
-			))
+			.then((user) => this._getProvider('accessControl')
+				.setPermission(user, req.params.rule, req.params.permission)
+			)
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
