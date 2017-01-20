@@ -11,7 +11,7 @@ class DeviceProvider extends BaseProvider {
 		this._locationLabels = ['altitude_meters', 'country', 'longitude', 'latitude', 'timezone']
 		this._DeviceModel = DeviceModel
 
-		var sequelizeModel = this.getProvider('sequelizeModel')
+		var sequelizeModel = this._getProvider('sequelizeModel')
 		this._Device = sequelizeModel.getModel('Device')
 		this._DeviceLabel = sequelizeModel.getModel('DeviceLabel')
 	}

@@ -10,7 +10,7 @@ class ForecastLocationProvider extends BaseProvider {
 
 		this._ForecastLocationModel = ForecastLocationModel
 
-		var sequelizeModel = this.getProvider('sequelizeModel')
+		var sequelizeModel = this._getProvider('sequelizeModel')
 		this._ForecastLocation = sequelizeModel.getModel('ForecastLocation')
 	}
 

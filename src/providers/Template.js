@@ -9,7 +9,7 @@ class TemplateProvider extends BaseProvider {
 
 		this._DeviceModel = DeviceModel
 
-		var sequelizeModel = this.getProvider('sequelizeModel')
+		var sequelizeModel = this._getProvider('sequelizeModel')
 		this._Template = sequelizeModel.getModel('Template')
 		this._Attribute = sequelizeModel.getModel('Attribute')
 	}

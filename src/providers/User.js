@@ -10,7 +10,7 @@ class UserProvider extends BaseProvider {
 
 		this._UserModel = UserModel
 
-		var sequelizeModel = this.getProvider('sequelizeModel')
+		var sequelizeModel = this._getProvider('sequelizeModel')
 		this._User = sequelizeModel.getModel('User')
 		this._UserToken = sequelizeModel.getModel('UserToken')
 	}
