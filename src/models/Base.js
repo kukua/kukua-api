@@ -8,6 +8,7 @@ class BaseModel {
 	}
 
 	get key () { throw new Error('Model key getter not implemented.') }
+	get id () { return this.get('id')  }
 
 	set (key, value) {
 		if (typeof key === 'object') {
@@ -21,10 +22,6 @@ class BaseModel {
 			return this._attributes
 		}
 		return this._attributes[key]
-	}
-
-	get id () {
-		return this.get('id')
 	}
 
 	_getProviderFactory () {

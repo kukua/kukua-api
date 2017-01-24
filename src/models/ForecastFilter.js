@@ -16,6 +16,9 @@ const fields = {
 }
 
 class ForecastFilterModel extends FilterModel {
+	get key () { return 'forecastFilter' }
+	get id () { return this.getType() }
+
 	setType (type) {
 		if (types.indexOf(type) === -1) throw new Error('Invalid type.')
 
@@ -27,21 +30,24 @@ class ForecastFilterModel extends FilterModel {
 	getType () {
 		return this.get('type') || types[0]
 	}
-	setLocation (locationOrID) {
-		var id = locationOrID
+	setLocation (location) {
+		if ( ! (location instanceof ForecastLocationModel)) {
+			if (typeof location !== 'number') {
+				throw new Error('Invalid location ID given.')
+			}
 
-		if (locationOrID instanceof ForecastLocationModel) {
-			id = locationOrID.id
-		}
-		if (typeof id !== 'number' || isNaN(id)) {
-			throw new Error('Invalid forecast location ID.')
+			location = new ForecastLocationModel({ id: location }, this._getProviderFactory())
 		}
 
-		this.set('locationID', id)
+		this.set('location', location)
 		return this
 	}
+	getLocation () {
+		return this.get('location')
+	}
 	getLocationID () {
-		return this.get('locationID')
+		var location = this.getLocation()
+		return (location ? location.id : null)
 	}
 	addField (name) {
 		this.checkField(name)

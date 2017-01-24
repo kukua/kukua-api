@@ -4,15 +4,16 @@ class SequelizeModelProvider extends BaseProvider {
 	constructor (providerFactory) {
 		super(providerFactory)
 
-		var sequelize = this._getProvider('sequelize').forDB('concava')
+		var concava = this._getProvider('sequelize').forDB('concava')
+		var User = require('./sequelizeModels/User')(concava)
+		var UserToken = require('./sequelizeModels/UserToken')(concava)
+		var Device = require('./sequelizeModels/Device')(concava)
+		var DeviceLabel = require('./sequelizeModels/DeviceLabel')(concava)
+		var Template = require('./sequelizeModels/Template')(concava)
+		var Attribute = require('./sequelizeModels/Attribute')(concava)
 
-		var User = require('./sequelizeModels/User')(sequelize)
-		var UserToken = require('./sequelizeModels/UserToken')(sequelize)
-		var Device = require('./sequelizeModels/Device')(sequelize)
-		var DeviceLabel = require('./sequelizeModels/DeviceLabel')(sequelize)
-		var Template = require('./sequelizeModels/Template')(sequelize)
-		var Attribute = require('./sequelizeModels/Attribute')(sequelize)
-		var ForecastLocation = require('./sequelizeModels/ForecastLocation')(sequelize)
+		var forecasts = this._getProvider('sequelize').forDB('forecasts')
+		var ForecastLocation = require('./sequelizeModels/ForecastLocation')(forecasts)
 
 		// Relations
 		User.hasMany(UserToken)

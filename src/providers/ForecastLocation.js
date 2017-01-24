@@ -14,6 +14,8 @@ class ForecastLocationProvider extends BaseProvider {
 		this._ForecastLocation = sequelizeModel.getModel('ForecastLocation')
 	}
 
+	get key () { return 'forecastLocation' }
+
 	_createModel (location) {
 		var attr = location.get()
 
