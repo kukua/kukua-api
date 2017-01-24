@@ -78,16 +78,9 @@ class JobProvider extends BaseProvider {
 			})
 		})
 	}
-	updateByID (id, data) {
+	update (job) {
 		return new Promise((resolve, reject) => {
-			if (typeof id !== 'string') return reject('Invalid job key given.')
-			if (typeof data !== 'object') return reject('Invalid data object given.')
-
-			delete data.created_at
-			delete data.updated_at
-
-			data.id = id
-			var job = this._createModel(data)
+			if ( ! (job instanceof this._JobModel)) return reject('Invalid Job given.')
 
 			try {
 				job.validate()
@@ -96,12 +89,12 @@ class JobProvider extends BaseProvider {
 			}
 
 			this._db.update(
-				{ id },
+				{ id: job.id },
 				this._prepareData(job.toJSON()),
 				{ upsert: true },
 				(err /*, numReplaced, upsert*/) => {
 					if (err) return reject(err)
-					this.findByID(id).then(resolve, reject)
+					this.findByID(job.id).then(resolve, reject)
 				}
 			)
 		})

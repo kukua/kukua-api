@@ -1,6 +1,8 @@
 const _ = require('underscore')
 const Promise = require('bluebird')
 const BaseController = require('./Base')
+const JobModel = require('../models/Job')
+const DeviceModel = require('../models/Device')
 
 class JobController extends BaseController {
 	constructor (app, providerFactory) {
@@ -18,25 +20,53 @@ class JobController extends BaseController {
 	}
 
 	_onIndex (req, res) {
+		var user = req.session.user
+
 		this._getProvider('job').find()
+			.then((jobs) => Promise.all(
+				jobs.map((job) => {
+					return this._canRead(user, job)
+						.then(() => job, () => null) // Filter out prohibited
+				})
+			))
+			.then((jobs) => _.compact(jobs))
 			.then((jobs) => Promise.all(jobs.map((job) => this._addIncludes(req, job))))
 			.then((jobs) => res.json(jobs))
 			.catch((err) => res.error(err))
 	}
 	_onShow (req, res) {
 		this._getProvider('job').findByID(req.params.id)
+			.then((job) => this._canRead(req.session.user, job))
 			.then((job) => this._addIncludes(req, job))
 			.then((job) => res.json(job))
 			.catch((err) => res.error(err))
 	}
 	_onTrigger (req, res) {
 		this._getProvider('job').findByID(req.params.id)
+			.then((job) => this._can(req.session.user, job, 'execute'))
 			.then((job) => job.exec())
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
 	_onUpdate (req, res) {
-		this._getProvider('job').updateByID(req.params.id, req.body)
+		var providerFactory = this._getProviderFactory()
+		var user = req.session.user
+
+		try {
+			var job = new JobModel({ id: req.params.id }, providerFactory)
+			job.fill(req.body)
+		} catch (err) {
+			return res.error(err)
+		}
+
+		this._canUpdate(user, job)
+			.then(() => job.getMeasurementFilter())
+			.then((filter) => Promise.all(
+				filter.getAllDeviceIDs().map((id) => (
+					this._canRead(user, new DeviceModel({ id }, providerFactory))
+				))
+			))
+			.then(() => this._getProvider('job').update(job))
 			.then((job) => this._updateJob(job))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
@@ -45,6 +75,7 @@ class JobController extends BaseController {
 		var provider = this._getProvider('job')
 
 		provider.findByID(req.params.id)
+			.then((job) => this._canDelete(req.session.user, job))
 			.then((job) => this._removeJob(job))
 			.then((job) => provider.remove(job))
 			.then(() => res.ok())

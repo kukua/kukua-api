@@ -9,6 +9,15 @@ const MeasurementFilterModel = require('./MeasurementFilter')
 const actionModels = require('./Job/actions/')
 
 class JobModel extends BaseModel {
+	get key () { return 'job' }
+
+	fill (data) {
+		data = Object.assign(this._attributes, data)
+		this.validate(data)
+		this.set(data)
+		return this
+	}
+
 	getSchema () {
 		return {
 			id: 'required|string|regex:/^[\\w\\.]+$/',
@@ -43,8 +52,8 @@ class JobModel extends BaseModel {
 			updated_at: 'date',
 		}
 	}
-	validate () {
-		var validator = new Validator(this.get(), this.getSchema())
+	validate (data) {
+		var validator = new Validator(data || this.get(), this.getSchema())
 
 		if (validator.fails()) {
 			throw new ValidationError('Invalid job.', validator.errors.all())
@@ -53,6 +62,11 @@ class JobModel extends BaseModel {
 
 	get isRunning () {
 		return this._getProvider('job').isRunning(this)
+	}
+
+	getMeasurementFilter () {
+		var filter = this.get('input').measurements.filter
+		return MeasurementFilterModel.unserialize(filter, this._getProviderFactory())
 	}
 
 	start () {
@@ -68,9 +82,7 @@ class JobModel extends BaseModel {
 
 		log.info(`Executing job ${this.id}.`)
 
-		var filter = this.get('input').measurements.filter
-
-		return MeasurementFilterModel.unserialize(filter, this._getProviderFactory())
+		return this.getMeasurementFilter()
 			.then((filter) => this._getProvider('measurement').findByFilter(filter))
 			.then((measurements) => {
 				var filter = filtr(this.get('condition').compare.measurements)
