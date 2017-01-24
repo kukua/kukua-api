@@ -13,9 +13,10 @@ class BadRequestError extends Error {
 	}
 }
 class UnauthorizedError extends Error {
-	constructor (msg = 'Unauthorized.') {
+	constructor (msg = 'Unauthorized.', details = []) {
 		super(msg)
 		this.statusCode = 401
+		this.data = { details }
 	}
 }
 class NotFoundError extends Error {

@@ -1,5 +1,6 @@
 const path = require('path')
 const _ = require('underscore')
+const humanize = require('underscore.string/humanize')
 const Promise = require('bluebird')
 const Datastore = require('nedb')
 const BaseProvider = require('./Base')
@@ -82,7 +83,15 @@ class AccessControlProvider extends BaseProvider {
 					}
 				}
 
-				reject(new UnauthorizedError('Not allowed.'))
+				var [ entity, method, id ] = rule.split('.')
+				entity = humanize(entity).toLowerCase()
+				method = humanize(method).toLowerCase()
+				reject(new UnauthorizedError(
+					'Not allowed.',
+					[
+						`No permission to ${method} ${entity} "${id}".`
+					]
+				))
 			})
 		})
 	}
