@@ -25,7 +25,7 @@ class DeviceController extends BaseController {
 			.then((groups) => group.getDeviceIDs(groups, deviceIDs))
 			.then((deviceIDs) => this._getAccessibleDeviceIDs(req.session.user, deviceIDs))
 			.then((deviceIDs) => device.find({ id: deviceIDs }))
-			.then((devices) => Promise.all(devices.map((device) => this._addIncludes(req, device))))
+			.then((devices) => this._addIncludes(req, devices))
 			.then((devices) => res.json(devices))
 			.catch((err) => res.error(err))
 	}

@@ -33,7 +33,7 @@ class UserGroupController extends BaseController {
 
 	_onIndex (req, res) {
 		this._getProvider('userGroup').find()
-			.then((groups) => Promise.all(groups.map((group) => this._addIncludes(req, group))))
+			.then((groups) => this._addIncludes(req, groups))
 			.then((groups) => res.json(groups))
 			.catch((err) => res.error(err))
 	}

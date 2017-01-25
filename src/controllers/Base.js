@@ -21,8 +21,16 @@ class BaseController {
 	}
 
 	_addIncludes (req, model) {
-		if ( ! req.query.includes) return Promise.resolve(model)
-		if ( ! (model instanceof BaseModel)) return Promise.reject('Invalid model.')
+		if ( ! req.query.includes) {
+			return Promise.resolve(model)
+		}
+		if (Array.isArray(model)) {
+			return Promise.all(model.map((model) => this._addIncludes(req, model)))
+
+		}
+		if ( ! (model instanceof BaseModel)) {
+			return Promise.reject('Invalid model.')
+		}
 
 		return model.load(req.query.includes.split(','))
 			.then(() => model)

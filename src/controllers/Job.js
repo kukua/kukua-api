@@ -30,7 +30,7 @@ class JobController extends BaseController {
 				})
 			))
 			.then((jobs) => _.compact(jobs))
-			.then((jobs) => Promise.all(jobs.map((job) => this._addIncludes(req, job))))
+			.then((jobs) => this._addIncludes(req, jobs))
 			.then((jobs) => res.json(jobs))
 			.catch((err) => res.error(err))
 	}
