@@ -2,6 +2,7 @@ const Promise = require('bluebird')
 const TwinBCrypt = require('twin-bcrypt')
 const BaseProvider = require('./Base')
 const UserModel = require('../models/User')
+const UserGroupModel = require('../models/UserGroup')
 const { UnauthorizedError, NotFoundError } = require('../helpers/errors')
 
 class UserProvider extends BaseProvider {
@@ -9,6 +10,7 @@ class UserProvider extends BaseProvider {
 		super(providerFactory)
 
 		this._UserModel = UserModel
+		this._UserGroupModel = UserGroupModel
 
 		var sequelizeModel = this._getProvider('sequelizeModel')
 		this._User = sequelizeModel.getModel('User')
@@ -89,6 +91,17 @@ class UserProvider extends BaseProvider {
 					if ( ! userToken) throw new NotFoundError()
 					resolve(this._createModel(userToken.get('user')))
 				})
+				.catch(reject)
+		})
+	}
+	findByGroup (group) {
+		return new Promise((resolve, reject) => {
+			if ( ! (group instanceof this._UserGroupModel)) {
+				return reject('Invalid UserGroup given.')
+			}
+
+			Promise.all(group.getUserIDs().map((id) => this.findByID(id)))
+				.then((users) => resolve(users))
 				.catch(reject)
 		})
 	}

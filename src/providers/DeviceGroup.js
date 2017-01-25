@@ -89,7 +89,7 @@ class DeviceGroupProvider extends BaseProvider {
 				return reject('Invalid group ID given (lowercase slug required).')
 			}
 
-			this._db.findOne({ id }).sort({ name: 1 }).exec((err, group) => {
+			this._db.findOne({ id }, (err, group) => {
 				if (err) return reject(err)
 				if ( ! group) return reject(new NotFoundError())
 				resolve(this._createModel(group))

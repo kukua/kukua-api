@@ -20,6 +20,7 @@ providers('accessControl') // Preload
 const { NotFoundError, InternalServerError } = require('./helpers/errors')
 
 const UserController = require('./controllers/User')
+const UserGroupController = require('./controllers/UserGroup')
 const DeviceController = require('./controllers/Device')
 const DeviceGroupController = require('./controllers/DeviceGroup')
 const MeasurementController = require('./controllers/Measurement')
@@ -94,6 +95,7 @@ app.use((req, res, next) => {
 
 // Routing
 new UserController(app, providers)
+new UserGroupController(app, providers)
 new DeviceController(app, providers)
 new DeviceGroupController(app, providers)
 new MeasurementController(app, providers)

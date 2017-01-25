@@ -9,6 +9,12 @@ class UserModel extends BaseModel {
 				this.set('config', config)
 			})
 	}
+	loadUserGroups () {
+		return this._getProvider('userGroup').findByUser(this)
+			.then((groups) => {
+				this.set('user_groups', groups)
+			})
+	}
 }
 
 module.exports = UserModel

@@ -24,6 +24,21 @@ class BaseModel {
 		return this._attributes[key]
 	}
 
+	fill (data) {
+		if (typeof data !== 'object') {
+			throw new Error('Invalid data object given.')
+		}
+
+		data = Object.assign({}, this.get(), data)
+
+		if (typeof this.validate === 'function') {
+			this.validate(data)
+		}
+
+		this.set(data)
+		return this
+	}
+
 	_getProviderFactory () {
 		return this._providerFactory
 	}

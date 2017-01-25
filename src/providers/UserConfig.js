@@ -2,8 +2,8 @@ const path = require('path')
 const Promise = require('bluebird')
 const Datastore = require('nedb')
 const BaseProvider = require('./Base')
-const UserModel = require('../models/User')
 const UserConfigModel = require('../models/UserConfig')
+const UserModel = require('../models/User')
 
 class UserConfigProvider extends BaseProvider {
 	constructor (providerFactory) {

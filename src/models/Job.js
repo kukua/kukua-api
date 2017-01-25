@@ -11,13 +11,6 @@ const actionModels = require('./Job/actions/')
 class JobModel extends BaseModel {
 	get key () { return 'job' }
 
-	fill (data) {
-		data = Object.assign(this._attributes, data)
-		this.validate(data)
-		this.set(data)
-		return this
-	}
-
 	getSchema () {
 		return {
 			id: 'required|string|regex:/^[\\w\\.]+$/',
