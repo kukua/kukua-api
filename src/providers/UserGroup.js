@@ -52,10 +52,12 @@ class UserGroupProvider extends BaseProvider {
 				where.id = { $in: options.id }
 			}
 
-			this._db.find(where).sort({ name: 1 }).exec((err, groups) => {
-				if (err) return reject(err)
-				resolve(groups.map((group) => this._createModel(group)))
-			})
+			this._db.find(where)
+				.sort({ name: 1 })
+				.exec((err, groups) => {
+					if (err) return reject(err)
+					resolve(groups.map((group) => this._createModel(group)))
+				})
 		})
 	}
 	findByID (id) {
@@ -73,10 +75,12 @@ class UserGroupProvider extends BaseProvider {
 				return reject('Invalid User given.')
 			}
 
-			this._db.find({ users: user.id }, (err, groups) => {
-				if (err) return reject(err)
-				resolve(groups.map((group) => this._createModel(group)))
-			})
+			this._db.find({ users: user.id })
+				.sort({ name: 1 })
+				.exec((err, groups) => {
+					if (err) return reject(err)
+					resolve(groups.map((group) => this._createModel(group)))
+				})
 		})
 	}
 	update (group) {

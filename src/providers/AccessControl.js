@@ -14,6 +14,8 @@ class AccessControlProvider extends BaseProvider {
 
 		this._UserModel = UserModel
 		this._UserGroupModel = UserGroupModel
+
+		// Least permission must have highest value, see _hasPermission method
 		this._permissions = {
 			INHERIT: 0,
 			ALLOW: 1,
@@ -60,12 +62,45 @@ class AccessControlProvider extends BaseProvider {
 
 		return this._createPrefix(model) + rule
 	}
-	_splitRule (rule) {
-		var [ entity, method ] = rule.split('.', 2)
+	_splitRule (rule, splitID = false) {
+		if (splitID) {
+			return rule.split('.')
+		}
+
+		var [ entity = '', method = '' ] = rule.split('.', 2)
 		var parts = [ entity, method ]
 		var id = rule.substr(entity.length + 1 /* dot */ + method.length + 1 /* dot */)
 		parts.push(id)
 		return parts
+	}
+	_createRules (model, rule) {
+		var parts = this._splitRule(rule, true)
+		var rules = []
+
+		while (parts.length > 0) {
+			rules.push(this._createRule(model, parts))
+			parts.pop()
+		}
+
+		return rules
+	}
+	_hasPermission (allRules, rights) {
+		// Each sub array of rules will be evaluated as a single permission check,
+		// if it evaluates so something other than INHERIT it will return the value
+		var { INHERIT, ALLOW, DENY } = this._permissions
+
+		// Create rights id => permission object
+		rights = _.object(rights.map((right) => right.id), rights.map((right) => right.permission))
+
+		for (var rules of allRules) {
+			// Max can be used here because DENY=2, ALLOW=1, and INHERIT=0
+			var permission = _.max(rules.map((rule) => (rights[rule] !== undefined ? rights[rule] : INHERIT)))
+
+			if (permission === ALLOW) return true
+			if (permission === DENY) return false
+		}
+
+		return false
 	}
 
 	can (user, rule) {
@@ -74,41 +109,32 @@ class AccessControlProvider extends BaseProvider {
 		}
 
 		return new Promise((resolve, reject) => {
-			var parts = this._splitRule(rule)
-			var rules = {}
-			var { INHERIT, ALLOW, DENY } = this._permissions
-
-			while (parts.length > 0) {
-				rules[this._createRule(user, parts)] = INHERIT
-				parts.pop()
-			}
-
-			this._db.find({
-				id: { $in: Object.keys(rules) },
-			}, (err, items) => {
-				items.forEach((item) => rules[item.id] = item.permission)
-
-				var keys = Object.keys(rules)
-
-				for (var key of keys) {
-					if (rules[key] === ALLOW) {
-						return resolve()
-					}
-					if (rules[key] === DENY) {
-						break
-					}
-				}
-
-				var [ entity, method, id ] = this._splitRule(rule)
-				entity = humanize(entity).toLowerCase()
-				method = humanize(method).toLowerCase()
-				reject(new UnauthorizedError(
-					'Not allowed.',
-					[
-						`No permission to ${method} ${entity} "${id}".`
+			this._getProvider('userGroup').findByUser(user)
+				.then((groups) => {
+					var rules = [
+						// Check all user permissions first
+						this._createRules(user, rule),
+						// Then each permission for all groups
+						..._.unzip(groups.map((group) => this._createRules(group, rule))),
 					]
-				))
-			})
+
+					// Fetch rights
+					this._db.find({
+						id: { $in: _.flatten(rules) },
+					}, (err, rights) => {
+						if ( ! this._hasPermission(rules, rights)) {
+							var [ entity, method, id ] = this._splitRule(rule)
+							entity = humanize(entity).toLowerCase()
+							method = humanize(method).toLowerCase()
+							return reject(new UnauthorizedError(
+								'Not allowed.',
+								[`No permission to ${method} ${entity} "${id}".`]
+							))
+						}
+
+						resolve()
+					})
+				})
 		})
 	}
 

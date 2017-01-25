@@ -63,10 +63,12 @@ class DeviceGroupProvider extends BaseProvider {
 	}
 	getAllIDs () {
 		return new Promise((resolve, reject) => {
-			this._db.find({}).sort({ name: 1 }).exec((err, groups) => {
-				if (err) return reject(err)
-				resolve(groups.map((group) => group.id))
-			})
+			this._db.find({})
+				.sort({ name: 1 })
+				.exec((err, groups) => {
+					if (err) return reject(err)
+					resolve(groups.map((group) => group.id))
+				})
 		})
 	}
 	find (options = {}) {
@@ -77,10 +79,12 @@ class DeviceGroupProvider extends BaseProvider {
 				where.id = { $in: options.id }
 			}
 
-			this._db.find(where).sort({ name: 1 }).exec((err, groups) => {
-				if (err) return reject(err)
-				resolve(groups.map((group) => this._createModel(group)))
-			})
+			this._db.find(where)
+				.sort({ name: 1 })
+				.exec((err, groups) => {
+					if (err) return reject(err)
+					resolve(groups.map((group) => this._createModel(group)))
+				})
 		})
 	}
 	findByID (id) {
