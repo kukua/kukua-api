@@ -11,12 +11,12 @@ class UserController extends BaseController {
 		app.get('/users/:id(\\d+)', auth.middleware, this._onShow.bind(this))
 
 		app.get(
-			'/users/:id(\\d+)/permissions/:rule([a-zA-Z\\d\\.]+)',
+			'/users/:id(\\d+)/permissions/:rule([a-zA-Z0-9\\.]+)',
 			auth.middleware,
 			this._onPermissionShow.bind(this)
 		)
 		app.put(
-			'/users/:id(\\d+)/permissions/:rule([a-zA-Z\\d\\.]+)/:permission(inherit|allow|deny)',
+			'/users/:id(\\d+)/permissions/:rule([a-zA-Z0-9\\.]+)/:permission(inherit|allow|deny)',
 			auth.middleware,
 			this._onPermissionUpdate.bind(this)
 		)

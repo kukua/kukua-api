@@ -89,9 +89,12 @@ class UserGroupProvider extends BaseProvider {
 				return reject('Invalid user group model.')
 			}
 
+			var data = group.toJSON()
+			delete data.users
+
 			this._db.update(
 				{ id: group.id },
-				group.toJSON(),
+				{ $set: data },
 				{ upsert: true },
 				(err /*, numReplaced, item*/) => {
 					if (err) return reject(err)

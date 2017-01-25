@@ -28,6 +28,8 @@ class UserGroupModel extends BaseModel {
 			id: 'required|string|regex:/^[a-zA-Z0-9]+$/',
 			name: 'required|string',
 			users: 'array',
+			created_at: 'date',
+			updated_at: 'date',
 		}
 	}
 	validate (data) {

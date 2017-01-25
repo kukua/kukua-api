@@ -11,7 +11,7 @@ class DeviceController extends BaseController {
 		var auth = this._getProvider('auth')
 
 		app.get('/devices', auth.middleware, this._onIndex.bind(this))
-		app.get('/devices/:id([\\da-fA-F]{16})', auth.middleware, this._onShow.bind(this))
+		app.get('/devices/:id([a-fA-F0-9]{16})', auth.middleware, this._onShow.bind(this))
 	}
 
 	_onIndex (req, res) {

@@ -1,7 +1,6 @@
 const _ = require('underscore')
 const Promise = require('bluebird')
 const BaseController = require('./Base')
-const { NotFoundError, UnauthorizedError } = require('../helpers/errors')
 const DeviceGroupModel = require('../models/DeviceGroup')
 
 class DeviceGroupController extends BaseController {
@@ -11,70 +10,90 @@ class DeviceGroupController extends BaseController {
 		var auth = this._getProvider('auth')
 
 		app.get('/deviceGroups', auth.middleware, this._onIndex.bind(this))
+		app.get('/deviceGroups/:id([a-zA-Z0-9]+)', auth.middleware, this._onShow.bind(this))
+		app.put('/deviceGroups/:id([a-zA-Z0-9]+)', auth.middleware, this._onUpdate.bind(this))
+		app.delete('/deviceGroups/:id([a-zA-Z0-9]+)', auth.middleware, this._onRemove.bind(this))
+
 		app.put(
-			'/devices/:deviceID([\\da-fA-F]{16})/groups/:id([\\da-z\\-]+)',
+			'/devices/:deviceID([a-fA-F0-9]{16})/groups/:id([a-zA-Z0-9]+)',
 			auth.middleware,
-			this._onUpdate.bind(this)
+			this._onDeviceAdd.bind(this)
 		)
 		app.delete(
-			'/devices/:deviceID([\\da-fA-F]{16})/groups/:id([\\da-z\\-]+)',
+			'/devices/:deviceID([a-fA-F0-9]{16})/groups/:id([a-zA-Z0-9]+)',
 			auth.middleware,
-			this._onRemove.bind(this)
+			this._onDeviceRemove.bind(this)
 		)
 	}
 
 	_onIndex (req, res) {
-		this._getAccessibleDeviceGroupIDs(req.session.user)
-			.then((groupIDs) => this._getProvider('deviceGroup').find({ id: groupIDs }))
+		var user = req.session.user
+
+		this._getProvider('deviceGroup').find()
+			.then((groups) => Promise.all(
+				groups.map((group) => {
+					return this._canRead(user, group)
+						.then(() => group, () => null) // Filter out prohibited
+				})
+			))
+			.then((groups) => _.compact(groups))
 			.then((groups) => this._addIncludes(req, groups))
 			.then((groups) => res.json(groups))
 			.catch((err) => res.error(err))
 	}
+	_onShow (req, res) {
+		this._getProvider('deviceGroup').findByID(req.params.id)
+			.then((group) => this._canRead(req.session.user, group))
+			.then((group) => this._addIncludes(req, group))
+			.then((group) => res.json(group))
+			.catch((err) => res.error(err))
+	}
 	_onUpdate (req, res) {
-		var provider = this._getProvider('deviceGroup')
+		var group = new DeviceGroupModel({ id: req.params.id }, this._getProviderFactory())
 
-		this._getProvider('device').findByID(req.params.deviceID)
-			.then((device) => this._canUpdate(req.session.user, device))
-			.then((device) => provider.findByID(req.params.id)
-				.then((group) => this._canUpdate(req.session.user, group))
-				.then((group) => provider.addDeviceToGroup(device, group))
-				// Create device group if it does not exist
-				.catch(NotFoundError, () => provider.addDeviceToGroup(
-					device, new DeviceGroupModel({ id: req.params.id }, this._getProviderFactory())
-				))
-			)
-			.then(() => res.ok())
+		this._canUpdate(req.session.user, group)
+			.then((group) => group.fill(req.body))
+			.then((group) => this._getProvider('deviceGroup').update(group))
+			.then((group) => res.json(group))
 			.catch((err) => res.error(err))
 	}
 	_onRemove (req, res) {
 		var provider = this._getProvider('deviceGroup')
 
-		this._getProvider('device').findByID(req.params.deviceID)
-			.then((device) => this._canUpdate(req.session.user, device))
-			.then((device) => provider.findByID(req.params.id)
-				.then((group) => this._canUpdate(req.session.user, group))
-				.then((group) => provider.removeDeviceFromGroup(device, group))
-			)
+		provider.findByID(req.params.id)
+			.then((group) => this._canDelete(req.session.user, group))
+			.then((group) => provider.remove(group))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
 
-	_getAccessibleDeviceGroupIDs (user) {
-		var providerFactory = this._getProviderFactory()
-		var filterAccessible = (groupIDs) => {
-			var promises = groupIDs.map((id) => {
-				var model = new DeviceGroupModel({ id }, providerFactory)
+	_onDeviceAdd (req, res) {
+		var user = req.session.user
+		var provider = this._getProvider('deviceGroup')
 
-				return this._canRead(user, model)
-					.then(() => id)
-					.catch(UnauthorizedError, () => null)
-			})
+		Promise.all([
+			this._getProvider('device').findByID(req.params.deviceID)
+				.then((device) => this._canUpdate(user, device)),
+			provider.findByID(req.params.id)
+				.then((group) => this._canUpdate(user, group)),
+		])
+			.then(([ device, group ]) => provider.addDeviceToGroup(device, group))
+			.then(() => res.ok())
+			.catch((err) => res.error(err))
+	}
+	_onDeviceRemove (req, res) {
+		var user = req.session.user
+		var provider = this._getProvider('deviceGroup')
 
-			return Promise.all(promises).then(_.compact)
-		}
-
-		return this._getProvider('deviceGroup').getAllIDs()
-			.then(filterAccessible)
+		Promise.all([
+			this._getProvider('device').findByID(req.params.deviceID)
+				.then((device) => this._canUpdate(user, device)),
+			provider.findByID(req.params.id)
+				.then((group) => this._canUpdate(user, group)),
+		])
+			.then(([ device, group ]) => provider.removeDeviceFromGroup(device, group))
+			.then(() => res.ok())
+			.catch((err) => res.error(err))
 	}
 }
 

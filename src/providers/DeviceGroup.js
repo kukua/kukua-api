@@ -2,8 +2,6 @@ const path = require('path')
 const _ = require('underscore')
 const Promise = require('bluebird')
 const Datastore = require('nedb')
-const slugify = require('underscore.string/slugify')
-const humanize = require('underscore.string/humanize')
 const BaseProvider = require('./Base')
 const DeviceGroupModel = require('../models/DeviceGroup')
 const DeviceModel = require('../models/Device')
@@ -89,8 +87,8 @@ class DeviceGroupProvider extends BaseProvider {
 	}
 	findByID (id) {
 		return new Promise((resolve, reject) => {
-			if (slugify(id) !== id) {
-				return reject('Invalid group ID (lowercase slug required).')
+			if (typeof id !== 'string') {
+				return reject('Invalid group ID.')
 			}
 
 			this._db.findOne({ id }, (err, group) => {
@@ -112,6 +110,42 @@ class DeviceGroupProvider extends BaseProvider {
 			})
 		})
 	}
+	update (group) {
+		return new Promise((resolve, reject) => {
+			if ( ! (group instanceof this._DeviceGroupModel)) {
+				return reject('Invalid device group model.')
+			}
+
+			var data = group.toJSON()
+			delete data.devices
+
+			this._db.update(
+				{ id: group.id },
+				{ $set: data },
+				{ upsert: true },
+				(err /*, numReplaced, item*/) => {
+					if (err) return reject(err)
+					this.findByID(group.id).then(resolve, reject)
+				}
+			)
+		})
+	}
+	remove (group) {
+		return new Promise((resolve, reject) => {
+			if ( ! (group instanceof this._DeviceGroupModel)) {
+				return reject('Invalid device group model.')
+			}
+
+			this._db.remove(
+				{ id: group.id },
+				{},
+				(err /*, numRemoved*/) => {
+					if (err) return reject(err)
+					resolve()
+				}
+			)
+		})
+	}
 	addDeviceToGroup (device, group) {
 		return new Promise((resolve, reject) => {
 			if ( ! (device instanceof this._DeviceModel)) {
@@ -123,7 +157,7 @@ class DeviceGroupProvider extends BaseProvider {
 
 			this._db.update(
 				{ id: group.id },
-				{ $set: { name: humanize(group.id) }, $addToSet: { devices: device.id } },
+				{ $addToSet: { devices: device.id } },
 				{ upsert: true },
 				(err /*, numReplaced, group*/) => {
 					if (err) return reject(err)
@@ -143,7 +177,7 @@ class DeviceGroupProvider extends BaseProvider {
 
 			this._db.update(
 				{ id: group.id },
-				{ $set: { name: humanize(group.id) }, $pull: { devices: device.id } },
+				{ $pull: { devices: device.id } },
 				{ upsert: true },
 				(err /*, numReplaced, group*/) => {
 					if (err) return reject(err)

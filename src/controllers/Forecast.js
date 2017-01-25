@@ -9,7 +9,7 @@ class ForecastController extends BaseController {
 
 		app.get('/forecasts', auth.middleware, this._onIndex.bind(this))
 		app.get('/forecastLocations', auth.middleware, this._onLocationIndex.bind(this))
-		app.get('/forecastLocations/:id([\\d]+)', auth.middleware, this._onLocationShow.bind(this))
+		app.get('/forecastLocations/:id(\\d+)', auth.middleware, this._onLocationShow.bind(this))
 	}
 
 	_onIndex (req, res) {
