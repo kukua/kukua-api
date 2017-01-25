@@ -51,7 +51,7 @@ class AccessControlProvider extends BaseProvider {
 			return `${model.key}.${model.id}:`
 		}
 
-		throw new Error('Invalid User or UserGroup model.')
+		throw new Error('Invalid user or user group model.')
 	}
 	_createRule (model, rule) {
 		if (Array.isArray(rule)) rule = rule.join('.')
@@ -105,7 +105,7 @@ class AccessControlProvider extends BaseProvider {
 
 	can (user, rule) {
 		if ( ! (user instanceof this._UserModel)) {
-			return Promise.reject(new BadRequestError('Invalid User model.'))
+			return Promise.reject(new BadRequestError('Invalid user model.'))
 		}
 
 		return new Promise((resolve, reject) => {

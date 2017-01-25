@@ -25,7 +25,7 @@ class TemplateProvider extends BaseProvider {
 	findByDevice (device) {
 		return new Promise((resolve, reject) => {
 			if ( ! (device instanceof this._DeviceModel)) {
-				return reject('Invalid Device given.')
+				return reject('Invalid device model.')
 			}
 
 			this._Template.findById(device.get('template_id'), {

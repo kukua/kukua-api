@@ -26,7 +26,7 @@ class BaseModel {
 
 	fill (data) {
 		if (typeof data !== 'object') {
-			throw new Error('Invalid data object given.')
+			throw new Error('Invalid data object.')
 		}
 
 		data = Object.assign({}, this.get(), data)

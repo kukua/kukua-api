@@ -69,7 +69,7 @@ class JobProvider extends BaseProvider {
 	}
 	findByID (id) {
 		return new Promise((resolve, reject) => {
-			if (typeof id !== 'string') return reject('Invalid job key given.')
+			if (typeof id !== 'string') return reject('Invalid job key.')
 
 			this._db.findOne({ id }, (err, job) => {
 				if (err) return reject(err)
@@ -80,7 +80,7 @@ class JobProvider extends BaseProvider {
 	}
 	update (job) {
 		return new Promise((resolve, reject) => {
-			if ( ! (job instanceof this._JobModel)) return reject('Invalid Job given.')
+			if ( ! (job instanceof this._JobModel)) return reject('Invalid job model.')
 
 			try {
 				job.validate()
@@ -101,7 +101,7 @@ class JobProvider extends BaseProvider {
 	}
 	remove (job) {
 		return new Promise((resolve, reject) => {
-			if ( ! (job instanceof this._JobModel)) return reject('Invalid Job given.')
+			if ( ! (job instanceof this._JobModel)) return reject('Invalid job model.')
 
 			this._db.remove(
 				{ id: job.id },

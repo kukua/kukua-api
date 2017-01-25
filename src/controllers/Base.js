@@ -22,7 +22,7 @@ class BaseController {
 
 	_addIncludes (req, model) {
 		if ( ! req.query.includes) return Promise.resolve(model)
-		if ( ! (model instanceof BaseModel)) return Promise.reject('Invalid model given.')
+		if ( ! (model instanceof BaseModel)) return Promise.reject('Invalid model.')
 
 		return model.load(req.query.includes.split(','))
 			.then(() => model)
@@ -42,7 +42,7 @@ class BaseController {
 		return this._can(user, model, 'delete')
 	}
 	_can (user, model, right) {
-		if ( ! (model instanceof BaseModel)) return Promise.reject('Invalid model given.')
+		if ( ! (model instanceof BaseModel)) return Promise.reject('Invalid model.')
 
 		var rule = `${model.key}.${right}.${model.id}`
 

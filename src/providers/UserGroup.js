@@ -72,7 +72,7 @@ class UserGroupProvider extends BaseProvider {
 	findByUser (user) {
 		return new Promise((resolve, reject) => {
 			if ( ! (user instanceof this._UserModel)) {
-				return reject('Invalid User given.')
+				return reject('Invalid user model.')
 			}
 
 			this._db.find({ users: user.id })
@@ -86,7 +86,7 @@ class UserGroupProvider extends BaseProvider {
 	update (group) {
 		return new Promise((resolve, reject) => {
 			if ( ! (group instanceof this._UserGroupModel)) {
-				return reject('Invalid UserGroup given.')
+				return reject('Invalid user group model.')
 			}
 
 			this._db.update(
@@ -103,7 +103,7 @@ class UserGroupProvider extends BaseProvider {
 	remove (group) {
 		return new Promise((resolve, reject) => {
 			if ( ! (group instanceof this._UserGroupModel)) {
-				return reject('Invalid UserGroup given.')
+				return reject('Invalid user group model.')
 			}
 
 			this._db.remove(
@@ -119,10 +119,10 @@ class UserGroupProvider extends BaseProvider {
 	addUserToGroup (user, group) {
 		return new Promise((resolve, reject) => {
 			if ( ! (user instanceof this._UserModel)) {
-				return reject('Invalid User given.')
+				return reject('Invalid user model.')
 			}
 			if ( ! (group instanceof this._UserGroupModel)) {
-				return reject('Invalid UserGroup given.')
+				return reject('Invalid user group model.')
 			}
 
 			this._db.update(
@@ -139,10 +139,10 @@ class UserGroupProvider extends BaseProvider {
 	removeUserFromGroup (user, group) {
 		return new Promise((resolve, reject) => {
 			if ( ! (user instanceof this._UserModel)) {
-				return reject('Invalid User given.')
+				return reject('Invalid user model.')
 			}
 			if ( ! (group instanceof this._UserGroupModel)) {
-				return reject('Invalid UserGroup given.')
+				return reject('Invalid user group model.')
 			}
 
 			this._db.update(

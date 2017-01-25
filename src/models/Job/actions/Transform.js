@@ -15,7 +15,7 @@ class TransformAction extends BaseAction {
 			})
 			const script = this.getConfig().script
 
-			if ( ! script) return reject('No "script" given.')
+			if ( ! script) return reject('Missing "script".')
 
 			data.transform = vm.run('(function(){' + script + '})()')
 			resolve()

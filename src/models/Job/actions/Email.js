@@ -35,7 +35,7 @@ class EmailAction extends BaseAction {
 			} else if (data.transform && typeof data.transform === 'string') {
 				text = data.transform
 			} else {
-				return reject('No "text" config or "transform" string value given.')
+				return reject('No "text" config or "transform" string value.')
 			}
 
 			Mailgun.messages().send({ from, to, subject, text }, (err) => {

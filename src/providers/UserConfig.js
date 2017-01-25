@@ -51,7 +51,7 @@ class UserConfigProvider extends BaseProvider {
 	findByUser (user) {
 		return new Promise((resolve, reject) => {
 			if ( ! (user instanceof this._UserModel)) {
-				return reject('Invalid User given.')
+				return reject('Invalid user model.')
 			}
 
 			this._db.find({ userID: user.id }, (err, items) => {
@@ -63,13 +63,13 @@ class UserConfigProvider extends BaseProvider {
 	updateForUser (user, id, data) {
 		return new Promise((resolve, reject) => {
 			if ( ! (user instanceof this._UserModel)) {
-				return reject('Invalid User given.')
+				return reject('Invalid user modek.')
 			}
 			if (typeof id !== 'string') {
-				return reject('Invalid config key given.')
+				return reject('Invalid config key.')
 			}
 			if (typeof data !== 'object') {
-				return reject('Invalid data object given.')
+				return reject('Invalid data object.')
 			}
 
 			var userID = user.id
@@ -92,10 +92,10 @@ class UserConfigProvider extends BaseProvider {
 	removeByUserAndID (user, id) {
 		return new Promise((resolve, reject) => {
 			if ( ! (user instanceof this._UserModel)) {
-				return reject('Invalid User given.')
+				return reject('Invalid user model.')
 			}
 			if (typeof id !== 'string') {
-				return reject('Invalid config key given.')
+				return reject('Invalid config key.')
 			}
 
 			this._db.remove(

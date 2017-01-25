@@ -17,7 +17,7 @@ class JobSchedulerProvider extends BaseProvider {
 	}
 	schedule (job) {
 		return new Promise((resolve, reject) => {
-			if ( ! (job instanceof this._JobModel)) return reject('Invalid Job given.')
+			if ( ! (job instanceof this._JobModel)) return reject('Invalid job model.')
 			if (this._jobs[job.id]) return resolve()
 
 			try {
@@ -43,7 +43,7 @@ class JobSchedulerProvider extends BaseProvider {
 	}
 	unschedule (job) {
 		return new Promise((resolve, reject) => {
-			if ( ! (job instanceof JobModel)) return reject('Invalid Job given.')
+			if ( ! (job instanceof JobModel)) return reject('Invalid job model.')
 			if ( ! this._jobs[job.id]) return resolve()
 
 			this._jobs[job.id].stop()

@@ -90,7 +90,7 @@ class DeviceGroupProvider extends BaseProvider {
 	findByID (id) {
 		return new Promise((resolve, reject) => {
 			if (slugify(id) !== id) {
-				return reject('Invalid group ID given (lowercase slug required).')
+				return reject('Invalid group ID (lowercase slug required).')
 			}
 
 			this._db.findOne({ id }, (err, group) => {
@@ -103,7 +103,7 @@ class DeviceGroupProvider extends BaseProvider {
 	findByDevice (device) {
 		return new Promise((resolve, reject) => {
 			if ( ! (device instanceof this._DeviceModel)) {
-				return reject('Invalid Device given.')
+				return reject('Invalid device model.')
 			}
 
 			this._db.find({ devices: device.id }, (err, groups) => {
@@ -115,10 +115,10 @@ class DeviceGroupProvider extends BaseProvider {
 	addDeviceToGroup (device, group) {
 		return new Promise((resolve, reject) => {
 			if ( ! (device instanceof this._DeviceModel)) {
-				return reject('Invalid Device given.')
+				return reject('Invalid device model.')
 			}
 			if ( ! (group instanceof this._DeviceGroupModel)) {
-				return reject('Invalid DeviceGroup given.')
+				return reject('Invalid device group model.')
 			}
 
 			this._db.update(
@@ -135,10 +135,10 @@ class DeviceGroupProvider extends BaseProvider {
 	removeDeviceFromGroup (device, group) {
 		return new Promise((resolve, reject) => {
 			if ( ! (device instanceof this._DeviceModel)) {
-				return reject('Invalid Device given.')
+				return reject('Invalid device model.')
 			}
 			if ( ! (group instanceof this._DeviceGroupModel)) {
-				return reject('Invalid DeviceGroup given.')
+				return reject('Invalid device group model.')
 			}
 
 			this._db.update(

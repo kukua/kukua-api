@@ -33,7 +33,7 @@ class ForecastFilterModel extends FilterModel {
 	setLocation (location) {
 		if ( ! (location instanceof ForecastLocationModel)) {
 			if (typeof location !== 'number') {
-				throw new Error('Invalid location ID given.')
+				throw new Error('Invalid location ID.')
 			}
 
 			location = new ForecastLocationModel({ id: location }, this._getProviderFactory())

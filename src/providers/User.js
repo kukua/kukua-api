@@ -43,10 +43,10 @@ class UserProvider extends BaseProvider {
 	findByCredentials (username, password) {
 		return new Promise((resolve, reject) => {
 			if (typeof username !== 'string') {
-				return reject('Invalid username string given.')
+				return reject('Invalid username string.')
 			}
 			if (typeof password !== 'string') {
-				return reject('Invalid password string given.')
+				return reject('Invalid password string.')
 			}
 
 			this._User.findOne({
@@ -97,7 +97,7 @@ class UserProvider extends BaseProvider {
 	findByGroup (group) {
 		return new Promise((resolve, reject) => {
 			if ( ! (group instanceof this._UserGroupModel)) {
-				return reject('Invalid UserGroup given.')
+				return reject('Invalid user group model.')
 			}
 
 			Promise.all(group.getUserIDs().map((id) => this.findByID(id)))
