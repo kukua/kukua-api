@@ -9,11 +9,13 @@ class UserController extends BaseController {
 
 		app.get('/users/login', this._onLogin.bind(this))
 		app.get('/users/:id(\\d+)', auth.middleware, this._onShow.bind(this))
+
 		app.put(
 			'/users/:id(\\d+)/permission/:rule([a-zA-Z\\d\\.]+)/:permission(inherit|allow|deny)',
 			auth.middleware,
 			this._onPermissionUpdate.bind(this)
 		)
+
 		app.put(
 			'/users/:id(\\d+)/config/:configID([\\w\\.]+)',
 			auth.middleware,
@@ -50,14 +52,21 @@ class UserController extends BaseController {
 			.then((user) => res.json(user))
 			.catch((err) => res.error(err))
 	}
+
 	_onPermissionUpdate (req, res) {
-		this._getProvider('user').findByID(req.params.id)
-			.then((user) => this._getProvider('accessControl')
-				.setPermission(user, req.params.rule, req.params.permission)
-			)
+		var accessControl = this._getProvider('accessControl')
+		var hasPermission = (accessControl.isEmpty()
+			? Promise.resolve() // Allow setting any user permission if ACL is empty
+			: accessControl.can(req.session.user, 'acl.setPermission.user.' + req.params.id)
+		)
+
+		hasPermission
+			.then(() => this._getProvider('user').findByID(req.params.id))
+			.then((user) => accessControl.setPermission(user, req.params.rule, req.params.permission))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
+
 	_onConfigUpdate (req, res) {
 		var { value } = req.body
 		if (value === undefined) throw new BadRequestError('No value provided.')
