@@ -14,7 +14,7 @@ class UserGroupController extends BaseController {
 		app.delete('/userGroups/:id([a-zA-Z0-9]+)', auth.middleware, this._onRemove.bind(this))
 
 		app.put(
-			'/userGroups/:id([a-zA-Z0-9]+)/permission/:rule([a-zA-Z\\d\\.]+)/:permission(inherit|allow|deny)',
+			'/userGroups/:id([a-zA-Z0-9]+)/permissions/:rule([a-zA-Z\\d\\.]+)/:permission(inherit|allow|deny)',
 			auth.middleware,
 			this._onPermissionUpdate.bind(this)
 		)
@@ -63,7 +63,7 @@ class UserGroupController extends BaseController {
 	_onPermissionUpdate (req, res) {
 		var accessControl = this._getProvider('accessControl')
 
-		accessControl.can(req.session.user, 'acl.setPermission.userGroup.' + req.params.id)
+		accessControl.can(req.session.user, 'acl.update.userGroup.' + req.params.id)
 			.then(() => this._getProvider('userGroup').findByID(req.params.id))
 			.then((group) => accessControl.setPermission(group, req.params.rule, req.params.permission))
 			.then(() => res.ok())

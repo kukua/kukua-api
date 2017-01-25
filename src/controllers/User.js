@@ -10,8 +10,13 @@ class UserController extends BaseController {
 		app.get('/users/login', this._onLogin.bind(this))
 		app.get('/users/:id(\\d+)', auth.middleware, this._onShow.bind(this))
 
+		app.get(
+			'/users/:id(\\d+)/permissions/:rule([a-zA-Z\\d\\.]+)',
+			auth.middleware,
+			this._onPermissionShow.bind(this)
+		)
 		app.put(
-			'/users/:id(\\d+)/permission/:rule([a-zA-Z\\d\\.]+)/:permission(inherit|allow|deny)',
+			'/users/:id(\\d+)/permissions/:rule([a-zA-Z\\d\\.]+)/:permission(inherit|allow|deny)',
 			auth.middleware,
 			this._onPermissionUpdate.bind(this)
 		)
@@ -53,11 +58,20 @@ class UserController extends BaseController {
 			.catch((err) => res.error(err))
 	}
 
+	_onPermissionShow (req, res) {
+		var accessControl = this._getProvider('accessControl')
+
+		accessControl.can(req.session.user, 'acl.read.' + req.params.rule)
+			.then(() => this._getProvider('user').findByID(req.params.id))
+			.then((user) => accessControl.can(user, req.params.rule))
+			.then(() => res.ok())
+			.catch((err) => res.error(err))
+	}
 	_onPermissionUpdate (req, res) {
 		var accessControl = this._getProvider('accessControl')
 		var hasPermission = (accessControl.isEmpty()
 			? Promise.resolve() // Allow setting any user permission if ACL is empty
-			: accessControl.can(req.session.user, 'acl.setPermission.user.' + req.params.id)
+			: accessControl.can(req.session.user, 'acl.update.user.' + req.params.id)
 		)
 
 		hasPermission
