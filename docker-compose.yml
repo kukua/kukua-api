@@ -1,0 +1,9 @@
+api:
+    image: node:6.4
+    working_dir: /data
+    ports:
+        - 3000:3000
+    volumes:
+        - .:/data
+    command: npm start
+    restart: always

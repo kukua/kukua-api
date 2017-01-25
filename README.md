@@ -1,5 +1,16 @@
 # Kukua Weather API
 
+## Setup
+
+```bash
+git clone https://github.com/kukua/kukua-api.git
+cd kukua-api
+cp .env.example .env
+chmod 600 .env
+# > Edit .env
+docker-compose up -d
+```
+
 ## Routes
 
 ```
