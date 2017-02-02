@@ -1,5 +1,5 @@
 const BaseProvider = require('./Base')
-const { NotFoundError } = require('../helpers/errors')
+const { UnauthorizedError, NotFoundError } = require('../helpers/errors')
 
 class AuthProvider extends BaseProvider {
 	constructor (providerFactory) {
@@ -10,17 +10,12 @@ class AuthProvider extends BaseProvider {
 
 	loginUser (req, res, user) {
 		if ( ! user.get('is_active')) {
-			res.status(401).error('This account has been disabled.')
-			return false
-		}
-		if ( ! user.get('is_admin')) {
-			res.status(401).error('Not allowed to perform this action.')
-			return false
+			throw new UnauthorizedError('This account has been disabled.')
 		}
 
 		res.setHeader('X-User-Id', user.id)
 		req.session.user = user
-		return true
+		return user
 	}
 
 	get middleware () {
@@ -33,10 +28,8 @@ class AuthProvider extends BaseProvider {
 		if ( ! token) return res.status(401).error(this._missingHeader)
 
 		this._getProvider('user').findByToken(token.toLowerCase())
-			.then((user) => {
-				if ( ! this.loginUser(req, res, user)) return
-				next()
-			})
+			.then((user) => this.loginUser(req, res, user))
+			.then(() => next())
 			.catch(NotFoundError, () => {
 				res.status(401).error('Invalid authentication token.')
 			})

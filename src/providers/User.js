@@ -62,7 +62,7 @@ class UserProvider extends BaseProvider {
 			})
 				.then((user) => {
 					if ( ! user) {
-						throw new UnauthorizedError('Invalid credentials')
+						throw new UnauthorizedError('Invalid credentials.')
 					}
 
 					var matches = TwinBCrypt.compareSync(password, user.get('password'))

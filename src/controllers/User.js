@@ -44,10 +44,10 @@ class UserController extends BaseController {
 		var [username, password] = Buffer(token, 'base64').toString().split(':', 2)
 
 		this._getProvider('user').findByCredentials(username, password)
-			.then((user) => {
-				if ( ! this._getProvider('auth').loginUser(req, res, user)) return
-				res.json(user)
-			})
+			.then((user) => this._getProvider('auth').loginUser(req, res, user))
+			.then((user) => this._canRead(req.session.user, user))
+			.then((user) => this._addIncludes(req, user))
+			.then((user) => res.json(user))
 			.catch((err) => res.error(err))
 	}
 	_onShow (req, res) {
