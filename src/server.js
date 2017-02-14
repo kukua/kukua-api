@@ -1,6 +1,6 @@
 try { require('dotenv').config() } catch (ex) { /* Do nothing */ }
 
-const express = require('express')
+const express = require('./helpers/express')
 const addRequestID = require('express-request-id')
 const bodyParser = require('body-parser')
 const app = express()
@@ -26,37 +26,6 @@ const DeviceGroupController = require('./controllers/DeviceGroup')
 const MeasurementController = require('./controllers/Measurement')
 const ForecastController = require('./controllers/Forecast')
 const JobController = require('./controllers/Job')
-
-// Custom responses
-express.response.error = function (err) {
-	this.req.log.error(err)
-
-	if ( ! (err instanceof Error)) {
-		err = new Error(err)
-	}
-	if (err.statusCode) {
-		this.status(err.statusCode)
-	} else if (this.statusCode === 200) {
-		this.status(500)
-	}
-
-	var data = {
-		statusCode: this.statusCode,
-		message: err.message,
-	}
-
-	if (typeof err.data === 'object') {
-		data = Object.assign(data, err.data)
-	}
-
-	this.json(data)
-}
-express.response.ok = function (data = {}) {
-	this.status(200).json(Object.assign({
-		statusCode: 200,
-		message: 'OK',
-	}, data))
-}
 
 // Middleware
 app.use((req, res, next) => {
