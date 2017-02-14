@@ -4,7 +4,9 @@ class UserConfigModel extends BaseModel {
 	loadUser () {
 		return this._getProvider('user').findByID(this.get('user_id'))
 			.then((user) => {
-				this.set('user', user)
+				var key = 'user'
+				this.set(key, user)
+				return [key, user]
 			})
 	}
 }

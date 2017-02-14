@@ -32,7 +32,7 @@ class MeasurementProvider extends BaseProvider {
 
 			this._getProvider('device').find({ id: deviceIDs })
 				.then((devices) => (
-					Promise.all(devices.map((device) => device.load('template')))
+					Promise.all(devices.map((device) => device.loadTemplate()))
 						.then(() => devices.map((device) => device.get('template').get('attributes')))
 				))
 				.then((attributes) => {

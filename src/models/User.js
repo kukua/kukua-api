@@ -6,13 +6,17 @@ class UserModel extends BaseModel {
 	loadConfig () {
 		return this._getProvider('userConfig').findByUser(this)
 			.then((config) => {
-				this.set('config', config)
+				var key = 'config'
+				this.set(key, config)
+				return [key, config]
 			})
 	}
 	loadGroups () {
 		return this._getProvider('userGroup').findByUser(this)
 			.then((groups) => {
-				this.set('user_groups', groups)
+				var key = 'user_groups'
+				this.set(key, groups)
+				return [key, groups]
 			})
 	}
 }

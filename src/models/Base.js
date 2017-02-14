@@ -1,6 +1,3 @@
-const _ = require('underscore')
-const classify = require('underscore.string/classify')
-
 class BaseModel {
 	constructor (attributes, providerFactory) {
 		this._attributes = attributes || {}
@@ -44,18 +41,6 @@ class BaseModel {
 	}
 	_getProvider (name) {
 		return this._getProviderFactory()(name)
-	}
-
-	load (...relations) {
-		return Promise.all(_.flatten(relations).map((relation) => {
-			var fn = 'load' + classify(relation)
-
-			if (typeof this[fn] !== 'function') {
-				throw new Error('Invalid relation: ' + relation)
-			}
-
-			return this[fn]()
-		}))
 	}
 
 	toJSON () {

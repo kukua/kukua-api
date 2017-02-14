@@ -1,5 +1,8 @@
+const _ = require('underscore')
+const classify = require('underscore.string/classify')
 const Promise = require('bluebird')
 const BaseModel  = require('../models/Base')
+const { UnauthorizedError } = require('../helpers/errors')
 
 class BaseController {
 	constructor (app, providerFactory) {
@@ -32,8 +35,34 @@ class BaseController {
 			return Promise.reject('Invalid model.')
 		}
 
-		return model.load(req.query.includes.split(','))
-			.then(() => model)
+		var user = req.session.user
+
+		return Promise.all(req.query.includes.split(',').map((relation) => {
+			var fn = 'load' + classify(relation)
+
+			if (typeof model[fn] !== 'function') {
+				throw new Error('Invalid relation: ' + relation)
+			}
+
+			return model[fn]().then(([key, modelOrModels]) => {
+				// Check read permissions
+				if (modelOrModels instanceof BaseModel) {
+					return this._canRead(user, modelOrModels)
+						// Remove if cannot be read
+						.catch(UnauthorizedError, () => model.set(key, undefined))
+				} else if (Array.isArray(modelOrModels)) {
+					return Promise.all(modelOrModels.map((model) => {
+						return this._canRead(user, model)
+							.catch(UnauthorizedError, () => null)
+					}))
+						// Replace with ones that can be read
+						.then((models) => model.set(key, _.compact(models)))
+				} else {
+					// No way of checking permissions, so skip (e.g. UserConfig object)
+					return Promise.resolve()
+				}
+			})
+		})).then(() => model)
 	}
 
 	// Verify CRUD operations

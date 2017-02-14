@@ -44,7 +44,9 @@ class DeviceGroupModel extends BaseModel {
 
 		return Promise.all(deviceIDs.map((id) => this._getProvider('device').findByID(id)))
 			.then((devices) => {
-				this.set('devices', devices)
+				var key = 'devices'
+				this.set(key, devices)
+				return [key, devices]
 			})
 	}
 }

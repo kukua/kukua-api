@@ -28,11 +28,13 @@ const ForecastController = require('./controllers/Forecast')
 const JobController = require('./controllers/Job')
 
 // Middleware
+const allowHeaders = 'Content-Type,Content-Length,Authorization,' +
+	'X-Auth-Token,X-Real-Ip,X-Forwarded-For,X-Forwarded-Proto,X-Requested-With'
+
 app.use((req, res, next) => {
 	res.header('Access-Control-Allow-Origin', '*')
 	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-	res.header('Access-Control-Allow-Headers', 'Content-Type,Content-Length,Authorization,' +
-		'X-Auth-Token,X-Real-Ip,X-Forwarded-For,X-Forwarded-Proto,X-Requested-With')
+	res.header('Access-Control-Allow-Headers', allowHeaders)
 
 	if (req.method === 'OPTIONS') {
 		res.sendStatus(200)
