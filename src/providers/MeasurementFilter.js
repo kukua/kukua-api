@@ -16,9 +16,13 @@ class MeasurementFilterProvider extends BaseProvider {
 
 	fromRequest (req) {
 		var filter = this._createModel()
-		var { fields, interval, from, to, sort, limit } = req.query
+		var { grouped, fields, interval, from, to, sort, limit } = req.query
 
-		filter.addField('timestamp')
+		grouped = parseInt(grouped)
+
+		if ( ! isNaN(grouped)) {
+			filter.setGrouped( !! grouped)
+		}
 
 		if (fields) {
 			fields.split(',').forEach((field) => {

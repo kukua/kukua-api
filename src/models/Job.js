@@ -82,7 +82,7 @@ class JobModel extends BaseModel {
 				var results = {}
 
 				try {
-					results.measurements = filter.test(measurements.get('items'))
+					results.measurements = filter.test(measurements.getItems())
 				} catch (err) {
 					log.error(err)
 					// TODO(mauvm): Improve error response

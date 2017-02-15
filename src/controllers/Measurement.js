@@ -33,7 +33,7 @@ class MeasurementController extends BaseController {
 				).then(() => filter)
 			})
 			.then((filter) => this._getProvider('measurement').findByFilter(filter))
-			.then((measurements) => res.json(measurements))
+			.then((list) => res.json(list))
 			.catch((err) => res.error(err))
 	}
 }

@@ -12,18 +12,37 @@ class ForecastListModel extends BaseModel {
 		if ( ! (attributes.filter instanceof ForecastFilterModel)) {
 			throw new Error('Invalid forecast filter.')
 		}
-		if ( ! Array.isArray(attributes.items)) {
-			throw new Error('Invalid forecast list items.')
+	}
+
+	getFilter () {
+		return this.get('filter')
+	}
+
+	setItems (items = []) {
+		if ( ! Array.isArray(items)) {
+			throw new Error('Invalid forecast items array.')
 		}
+
+		this.set('items', items)
+		return this
+	}
+	getItems () {
+		return this.get('items')
+	}
+
+	getColumns () {
+		var items = this.getItems()
+		return (items.length > 0 ? _.keys(items[0]) : [])
+	}
+	getValues () {
+		return _.map(this.getItems(), (item) => _.values(item))
 	}
 
 	toJSON () {
-		var items = this.get('items')
-
 		return {
-			filter: this.get('filter'),
-			columns: (items.length > 0 ? _.keys(items[0]) : []),
-			values: _.map(items, (item) => _.values(item)),
+			filter: this.getFilter(),
+			columns: this.getColumns(),
+			values: this.getValues(),
 		}
 	}
 }

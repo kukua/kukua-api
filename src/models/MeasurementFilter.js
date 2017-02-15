@@ -6,6 +6,15 @@ const DeviceGroupModel = require('./DeviceGroup')
 const aggregators = ['sum', 'avg', 'min', 'max', 'count', 'std', 'varience']
 
 class MeasurementFilterModel extends FilterModel {
+	setGrouped (grouped = true) {
+		this.set('grouped', grouped)
+		return this
+	}
+	isGrouped () {
+		var grouped = this.get('grouped')
+		if (grouped === undefined) grouped = true
+		return grouped
+	}
 	setDevices (deviceIDs) {
 		if ( ! Array.isArray(deviceIDs)) throw new Error('Invalid device IDs.')
 
@@ -76,6 +85,7 @@ class MeasurementFilterModel extends FilterModel {
 	toJSON () {
 		var data = super.toJSON()
 
+		data.grouped = this.isGrouped()
 		data.devices = this.getDevices()
 		data.device_groups = this.getDeviceGroups().map((group) => group.id)
 		data.all_device_ids = this.getAllDeviceIDs()
@@ -90,6 +100,7 @@ MeasurementFilterModel.unserialize = (json, providerFactory) => {
 		var data = (typeof json === 'object' ? json : JSON.parse(json))
 		var filter = new MeasurementFilterModel({}, providerFactory)
 
+		if (data.grouped !== undefined) filter.setGrouped(data.grouped)
 		filter.setDevices(data.devices)
 		data.fields.map(({ name, aggregator }) => filter.addField(name, aggregator))
 		filter.setInterval(data.interval)

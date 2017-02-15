@@ -14,10 +14,6 @@ class MeasurementProvider extends BaseProvider {
 		this._fields = fields
 	}
 
-	_createModel (filter, items = []) {
-		return new (this._MeasurementListModel)({ filter, items }, this._getProviderFactory())
-	}
-
 	findByFilter (filter) {
 		return new Promise((resolve, reject) => {
 			if ( ! (filter instanceof this._MeasurementFilterModel)) {
@@ -83,26 +79,31 @@ class MeasurementProvider extends BaseProvider {
 
 					var limit = (filter.getLimit() ? `LIMIT ${filter.getLimit()}` : '')
 
-					var tables = deviceIDs.map((id) => (
-						`(SELECT \`${columns.join('`, `')}\` FROM \`${id}\` ${where})`
-					)).join('UNION ALL')
-
-					return `
-						SELECT ${selects.join(',')}
-						FROM (${tables}) AS t
-						GROUP BY UNIX_TIMESTAMP(timestamp) - UNIX_TIMESTAMP(timestamp) % ${filter.getInterval()}
-						${order}
-						${limit}
-					`.replace(/\t/g, '')
-				})
-				.then((sql) => {
-					// Run SQL query
 					var sequelize = this._getProvider('sequelize').forDB('measurements')
+					var query = (deviceIDs) => sequelize.query(
+						`
+							SELECT ${selects.join(',')}
+							FROM ${'(' + deviceIDs.map((id) => (
+								`(SELECT \`${columns.join('`, `')}\` FROM \`${id}\` ${where})`
+							)).join('UNION ALL') + ')'} AS t
+							GROUP BY UNIX_TIMESTAMP(timestamp) - UNIX_TIMESTAMP(timestamp) % ${filter.getInterval()}
+							${order}
+							${limit}
+						`.replace(/\t/g, ''),
+						{ type: sequelize.QueryTypes.SELECT }
+					)
+					var list = new (this._MeasurementListModel)({ filter }, this._getProviderFactory())
 
-					sequelize.query(sql, { type: sequelize.QueryTypes.SELECT })
-						.then((items) => this._createModel(filter, items))
-						.then(resolve)
+					if (filter.isGrouped()) {
+						return query(deviceIDs)
+							.then((items) => list.setItems(items)) // Returns list
+					} else {
+						return Promise.all(deviceIDs.map((id) => query([id])))
+							.then((lists) => _.object(deviceIDs, lists))
+							.then((items) => list.setItems(items)) // Returns list
+					}
 				})
+				.then((list) => resolve(list))
 				.catch(reject)
 		})
 	}
