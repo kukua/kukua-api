@@ -5,6 +5,8 @@ const BaseProvider = require('./Base')
 const UserConfigModel = require('../models/UserConfig')
 const UserModel = require('../models/User')
 
+const invalidFieldName = 'Field names cannot begin with the $ character'
+
 class UserConfigProvider extends BaseProvider {
 	constructor (providerFactory) {
 		super(providerFactory)
@@ -35,7 +37,7 @@ class UserConfigProvider extends BaseProvider {
 		var attr = {
 			id: item.id,
 			user_id: item.userID,
-			value: item.value,
+			value: (item.serialized ? JSON.parse(item.value) : item.value),
 			created_at: item.createdAt,
 			updated_at: item.updatedAt,
 		}
@@ -80,9 +82,17 @@ class UserConfigProvider extends BaseProvider {
 					id,
 					userID,
 					value: data.value,
+					serialized: data.serialized,
 				} },
 				{ upsert: true },
 				(err /*, numReplaced, item*/) => {
+					if (err && err.message === invalidFieldName && ! data.serialized) {
+						// Serialize and try again
+						data.value = JSON.stringify(data.value)
+						data.serialized = true
+						this.updateForUser(user, id, data).then(resolve, reject)
+						return
+					}
 					if (err) return reject(err)
 					resolve()
 				}
