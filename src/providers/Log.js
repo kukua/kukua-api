@@ -26,10 +26,10 @@ class LogProvider extends BaseProvider {
 		super(providerFactory)
 
 		var logPath = String(process.env.LOG_PATH || '/tmp/output.log')
-		this.create(logPath)
+		this._createDB(logPath)
 	}
 
-	create (logPath) {
+	_createDB (logPath) {
 		this._log = bunyan.createLogger({
 			name: 'api',
 			streams: [

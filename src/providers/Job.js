@@ -1,6 +1,7 @@
 const path = require('path')
 const Promise = require('bluebird')
 const Datastore = require('nedb')
+const deepcopy = require('deepcopy')
 const BaseProvider = require('./Base')
 const JobModel = require('../models/Job')
 const { NotFoundError } = require('../helpers/errors')
@@ -12,10 +13,10 @@ class JobProvider extends BaseProvider {
 		this._JobModel = JobModel
 
 		var filePath = path.resolve(process.env.JOB_DB_PATH)
-		this.create(filePath)
+		this._createDB(filePath)
 	}
 
-	create (filePath) {
+	_createDB (filePath) {
 		var db = this._db = new Datastore({
 			filename: filePath,
 			autoload: true,
@@ -27,13 +28,10 @@ class JobProvider extends BaseProvider {
 		})
 	}
 
-	_createModel (data) {
-		return new (this._JobModel)(data, this._getProviderFactory())
-	}
-	_extractData (job) {
-		var data = Object.assign({}, job)
-		data.created_at = job.createdAt
-		data.updated_at = job.updatedAt
+	_createModel (job) {
+		var data = deepcopy(job)
+		data.created_at = data.createdAt
+		data.updated_at = data.updatedAt
 
 		delete data._id
 		delete data.createdAt
@@ -46,7 +44,7 @@ class JobProvider extends BaseProvider {
 			data.actions = JSON.parse(data.actions)
 		}
 
-		return data
+		return new (this._JobModel)(data, this._getProviderFactory())
 	}
 	_prepareData (data) {
 		if (data.condition && typeof data.condition.compare === 'object') {
@@ -63,7 +61,7 @@ class JobProvider extends BaseProvider {
 		return new Promise((resolve, reject) => {
 			this._db.find({}, (err, jobs) => {
 				if (err) return reject(err)
-				resolve(jobs.map((job) => this._createModel(this._extractData(job))))
+				resolve(jobs.map((job) => this._createModel(job)))
 			})
 		})
 	}
@@ -74,7 +72,7 @@ class JobProvider extends BaseProvider {
 			this._db.findOne({ id }, (err, job) => {
 				if (err) return reject(err)
 				if ( ! job) return reject(new NotFoundError())
-				resolve(this._createModel(this._extractData(job)))
+				resolve(this._createModel(job))
 			})
 		})
 	}

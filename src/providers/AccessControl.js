@@ -23,10 +23,10 @@ class AccessControlProvider extends BaseProvider {
 		}
 
 		var filePath = path.resolve(process.env.ACL_DB_PATH)
-		this.create(filePath)
+		this._createDB(filePath)
 	}
 
-	create (filePath) {
+	_createDB (filePath) {
 		var db = this._db = new Datastore({
 			filename: filePath,
 			autoload: true,

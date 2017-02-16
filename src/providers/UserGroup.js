@@ -14,10 +14,10 @@ class UserGroupProvider extends BaseProvider {
 		this._UserModel = UserModel
 
 		var filePath = path.resolve(process.env.USER_GROUP_DB_PATH)
-		this.create(filePath)
+		this._createDB(filePath)
 	}
 
-	create (filePath) {
+	_createDB (filePath) {
 		var db = this._db = new Datastore({
 			filename: filePath,
 			autoload: true,
