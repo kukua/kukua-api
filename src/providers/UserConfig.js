@@ -50,13 +50,19 @@ class UserConfigProvider extends BaseProvider {
 		return config
 	}
 
-	findByUser (user) {
+	findByUser (user, options = {}) {
 		return new Promise((resolve, reject) => {
 			if ( ! (user instanceof this._UserModel)) {
 				return reject('Invalid user model.')
 			}
 
-			this._db.find({ userID: user.id }, (err, items) => {
+			var where = { userID: user.id }
+
+			if (typeof options.id === 'string' || Array.isArray(options.id)) {
+				where.id = options.id
+			}
+
+			this._db.find(where, (err, items) => {
 				if (err) return reject(err)
 				resolve(this._createConfig(items.map((item) => this._createModel(item))))
 			})

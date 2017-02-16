@@ -2,7 +2,6 @@ const _ = require('underscore')
 const Promise = require('bluebird')
 const BaseController = require('./Base')
 const JobModel = require('../models/Job')
-const DeviceModel = require('../models/Device')
 
 class JobController extends BaseController {
 	constructor (app, providerFactory) {
@@ -14,6 +13,7 @@ class JobController extends BaseController {
 
 		app.get('/jobs', auth.middleware, this._onIndex.bind(this))
 		app.get('/jobs/:id([\\w\\.]+)', auth.middleware, this._onShow.bind(this))
+		app.get('/jobs/:id([\\w\\.]+)/results', auth.middleware, this._onShowResults.bind(this))
 		app.post('/jobs/:id([\\w\\.]+)/trigger', auth.middleware, this._onTrigger.bind(this))
 		app.put('/jobs/:id([\\w\\.]+)', auth.middleware, this._onUpdate.bind(this))
 		app.delete('/jobs/:id([\\w\\.]+)', auth.middleware, this._onRemove.bind(this))
@@ -41,6 +41,17 @@ class JobController extends BaseController {
 			.then((job) => res.json(job))
 			.catch((err) => res.error(err))
 	}
+	_onShowResults (req, res) {
+		var limit
+		if (req.query.limit) limit = parseInt(req.query.limit)
+		if (isNaN(limit)) limit = null
+
+		this._getProvider('job').findByID(req.params.id)
+			.then((job) => this._canRead(req.session.user, job))
+			.then((job) => this._getProvider('jobResult').findByJob(job, limit))
+			.then((results) => res.json(results))
+			.catch((err) => res.error(err))
+	}
 	_onTrigger (req, res) {
 		this._getProvider('job').findByID(req.params.id)
 			.then((job) => this._can(req.session.user, job, 'execute'))
@@ -60,12 +71,13 @@ class JobController extends BaseController {
 		}
 
 		this._canUpdate(user, job)
-			.then(() => job.getMeasurementFilter())
+			// TODO(mauvm): Apply ACL to input models
+			/*.then(() => job.getMeasurementFilter())
 			.then((filter) => Promise.all(
 				filter.getAllDeviceIDs().map((id) => (
 					this._canRead(user, new DeviceModel({ id }, providerFactory))
 				))
-			))
+			))*/
 			.then(() => this._getProvider('job').update(job))
 			.then((job) => this._updateJob(job))
 			.then(() => res.ok())

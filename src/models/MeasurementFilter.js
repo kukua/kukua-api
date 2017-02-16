@@ -101,13 +101,17 @@ MeasurementFilterModel.unserialize = (json, providerFactory) => {
 		var filter = new MeasurementFilterModel({}, providerFactory)
 
 		if (data.grouped !== undefined) filter.setGrouped(data.grouped)
-		filter.setDevices(data.devices)
+		if (data.devices) filter.setDevices(data.devices)
 		data.fields.map(({ name, aggregator }) => filter.addField(name, aggregator))
 		filter.setInterval(data.interval)
 		if (data.from) filter.setFrom(moment.utc(data.from))
 		if (data.to) filter.setTo(moment.utc(data.to))
 		data.sort.map(({ name, order }) => filter.addSort(name, order))
 		filter.setLimit(data.limit)
+
+		if ( ! Array.isArray(data.device_groups)) {
+			return Promise.resolve(filter)
+		}
 
 		return Promise.all(data.device_groups.map((id) => providerFactory('deviceGroup').findByID(id)))
 			.then((groups) => filter.setDeviceGroups(groups))

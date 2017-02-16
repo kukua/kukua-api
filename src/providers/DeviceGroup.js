@@ -14,7 +14,7 @@ class DeviceGroupProvider extends BaseProvider {
 		this._DeviceGroupModel = DeviceGroupModel
 		this._DeviceModel = DeviceModel
 
-		var filePath = path.resolve(process.env.DEVICE_GROUPS_DB_PATH)
+		var filePath = path.resolve(process.env.DEVICE_GROUP_DB_PATH)
 		this.create(filePath)
 	}
 

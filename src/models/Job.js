@@ -1,11 +1,12 @@
 const _ = require('underscore')
 const Promise = require('bluebird')
+const runInVM = require('../helpers/runInVM')
 const deepcopy = require('deepcopy')
-const filtr = require('filtr')
 const BaseModel = require('./Base')
 const Validator = require('../helpers/validator')
 const { ValidationError } = require('../helpers/errors')
 const MeasurementFilterModel = require('./MeasurementFilter')
+const JobResultModel = require('./JobResult')
 const actionModels = require('./Job/actions/')
 
 class JobModel extends BaseModel {
@@ -20,26 +21,10 @@ class JobModel extends BaseModel {
 					cron: 'required_without:trigger.schedule.interval|cron',
 				},
 			},
-			input: {
-				measurements: {
-					filter: {
-						devices: 'required_without:input.measurements.filter.device_groups|array',
-						device_groups: 'required_without:input.measurements.filter.devices|array',
-						fields: 'required|array',
-						interval: 'required|numeric',
-						from: 'date',
-						to: 'date',
-						sort: 'required|array',
-						limit: 'numeric',
-					},
-				},
-			},
-			condition: {
-				compare: {
-					measurements: 'required|object',
-				}
-			},
-			actions: 'required|object',
+			input: 'required|object',
+			//condition: 'object',
+			transform: 'object',
+			actions: 'object',
 			throttle_period: 'duration',
 			created_at: 'date',
 			updated_at: 'date',
@@ -57,11 +42,6 @@ class JobModel extends BaseModel {
 		return this._getProvider('job').isRunning(this)
 	}
 
-	getMeasurementFilter () {
-		var filter = this.get('input').measurements.filter
-		return MeasurementFilterModel.unserialize(filter, this._getProviderFactory())
-	}
-
 	start () {
 		return this._getProvider('job').schedule(this)
 			.then(() => this)
@@ -72,49 +52,104 @@ class JobModel extends BaseModel {
 	}
 	exec () {
 		var log = this._getProvider('log').child({ job_id: this.id, is_executing: true })
+		var result = new JobResultModel({ job_id: this.id }, this._getProviderFactory())
 
 		log.info(`Executing job ${this.id}.`)
 
-		return this.getMeasurementFilter()
-			.then((filter) => this._getProvider('measurement').findByFilter(filter))
-			.then((measurements) => {
-				var filter = filtr(this.get('condition').compare.measurements)
-				var results = {}
+		var data = {}
 
-				try {
-					results.measurements = filter.test(measurements.getItems())
-				} catch (err) {
-					log.error(err)
-					// TODO(mauvm): Improve error response
-					throw new Error('Error filtering measurements. Please check the compare condition.')
+		// Input
+		return Promise.all(_.map(this.get('input'), (input, name) => new Promise((resolve, reject) => {
+			data[name] = null
+
+			// TODO(mauvm): Allow getting data without executing, to do ACL
+			if (input.user_config) {
+				var config = input.user_config
+
+				if (typeof config !== 'object' || ! config.where) {
+					throw new Error('Invalid input option for "user_config": Missing where object.')
+				}
+				if ( ! config.where.user_id) {
+					throw new Error('Invalid input option for "user_config": Missing where.user_id.')
 				}
 
-				return Promise.all(
-					_.map(this.get('actions'), (actions, name) => new Promise((resolve, reject) => {
-						if (typeof actions !== 'object') return reject(`Invalid action "${name}": Not an object.`)
+				this._getProvider('user').findByID(config.where.user_id)
+					.then((user) => this._getProvider('userConfig').findByUser(user, { id: config.where.id }))
+					.then((config) => data[name] = _.object(
+						_.keys(config),
+						_.map(config, (item) => item.getValue())
+					))
+					.then(resolve)
+					.catch(reject)
+			} else if (input.measurement_filter) {
+				MeasurementFilterModel.unserialize(input.measurement_filter, this._getProviderFactory())
+					.then((filter) => this._getProvider('measurement').findByFilter(filter))
+					.then((list) => data[name] = list.getItems())
+					.then(resolve)
+					.catch(reject)
+			} else {
+				reject(`Invalid input option(s) for "${name}": ${Object.keys(input).join(', ')}.`)
+			}
+		})))
+			// TODO(mauvm): Condition
 
-						var data = deepcopy(results)
-						actions = _.map(actions, (action, key) => ({ action, key }))
+			// Transform
+			.then(() => {
+				var transform = this.get('transform')
 
-						return Promise.mapSeries(actions, ({ action, key }) => {
-							try {
-								var Model = _.find(actionModels, (Model) => Model.key === key)
+				if ( ! transform) return
 
-								if ( ! Model) throw new Error(`Unknown action "${key}".`)
-
-								var model = new Model(
-									action,
-									log.child({ action: `${name}.${key}` })
-								)
-
-								return model.exec(data)
-							} catch (err) {
-								return reject(`Invalid action "${name}": ${err.message}`)
-							}
-						}).then(resolve, reject)
-					}))
-				)
+				_.forEach(transform, (config, name) => {
+					try {
+						data[name] = runInVM({
+							script: config.script,
+							sandbox: {
+								data,
+								context: data,
+								ctx: data,
+							},
+						})
+					} catch (err) {
+						throw new Error(`Invalid transform option for "${name}": ${err.message}`)
+					}
+				})
 			})
+
+			// Actions
+			.then(() => Promise.all(
+				_.map(this.get('actions'), (actions, name) => {
+					if (typeof actions !== 'object') {
+						throw new Error(`Invalid action "${name}": Not an object.`)
+					}
+
+					var actionData = deepcopy(data)
+
+					return Promise.mapSeries(_.map(actions, (action, key) => ({ action, key })), ({ action, key }) => {
+						try {
+							var Model = _.find(actionModels, (Model) => Model.key === key)
+
+							if ( ! Model) throw new Error(`Unknown action "${key}".`)
+
+							var model = new Model(
+								action,
+								log.child({ action: `${name}.${key}` })
+							)
+
+							return model.exec(actionData)
+						} catch (err) {
+							throw new Error(`Error in action "${name}": ${err.message}`)
+						}
+					})
+				})
+			))
+
+			// Create job result
+			.then(() => result.setData(data))
+			.catch((err) => result.setError(err))
+			.then(() => this._getProvider('jobResult').create(result))
+
+			// Done
+			.then(() => log.info({ is_executing: false, job_result_id: result.id }))
 	}
 }
 
