@@ -1,5 +1,6 @@
 const Promise = require('bluebird')
 const moment = require('moment-timezone')
+const parseDuration = require('parse-duration')
 const FilterModel = require('./Filter')
 const DeviceGroupModel = require('./DeviceGroup')
 
@@ -104,8 +105,24 @@ MeasurementFilterModel.unserialize = (json, providerFactory) => {
 		if (data.devices) filter.setDevices(data.devices)
 		data.fields.map(({ name, aggregator }) => filter.addField(name, aggregator))
 		filter.setInterval(data.interval)
-		if (data.from) filter.setFrom(moment.utc(data.from))
-		if (data.to) filter.setTo(moment.utc(data.to))
+		if (data.to) {
+			var to
+			if (data.to === 'now') {
+				to = moment.utc()
+			} else {
+				to = moment.utc(data.to)
+			}
+			filter.setTo(to)
+		}
+		if (data.from) {
+			var from
+			if (data.from.startsWith('-')) {
+				from = moment.utc(filter.getTo()).subtract(parseDuration(data.from.substr(1)), 'milliseconds')
+			} else {
+				from = moment.utc(data.from)
+			}
+			filter.setFrom(from)
+		}
 		data.sort.map(({ name, order }) => filter.addSort(name, order))
 		filter.setLimit(data.limit)
 
