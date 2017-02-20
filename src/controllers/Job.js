@@ -71,13 +71,10 @@ class JobController extends BaseController {
 		}
 
 		this._canUpdate(user, job)
-			// TODO(mauvm): Apply ACL to input models
-			/*.then(() => job.getMeasurementFilter())
-			.then((filter) => Promise.all(
-				filter.getAllDeviceIDs().map((id) => (
-					this._canRead(user, new DeviceModel({ id }, providerFactory))
-				))
-			))*/
+			.then(() => job.getInputModels())
+			.then((models) => Promise.all(models.map((model) => model.getModels())))
+			.then((models) => _.flatten(models))
+			.then((models) => Promise.all(models.map((model) => this._canRead(user, model))))
 			.then(() => this._getProvider('job').update(job))
 			.then((job) => this._updateJob(job))
 			.then(() => res.ok())

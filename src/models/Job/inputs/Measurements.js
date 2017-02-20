@@ -1,13 +1,17 @@
 const BaseInput = require('./Base')
 const MeasurementFilterModel = require('../../MeasurementFilter')
+const DeviceModel = require('../../Device')
 
 class MeasurementsInput extends BaseInput {
 	getFilter () {
 		return MeasurementFilterModel.unserialize(this.getConfig(), this._getProviderFactory())
 	}
 	getModels () {
+		var providerFactory = this._getProviderFactory()
+
 		return this.getFilter()
-			.then((filter) => this._getProvider('device').find({ id: filter.getAllDeviceIDs() }))
+			.then((filter) => filter.getAllDeviceIDs())
+			.then((udids) => udids.map((id) => new DeviceModel({ id }, providerFactory)))
 	}
 	getData () {
 		return this.getFilter()
