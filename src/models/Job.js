@@ -5,8 +5,8 @@ const deepcopy = require('deepcopy')
 const BaseModel = require('./Base')
 const Validator = require('../helpers/validator')
 const { ValidationError } = require('../helpers/errors')
-const MeasurementFilterModel = require('./MeasurementFilter')
 const JobResultModel = require('./JobResult')
+const inputModels = require('./Job/inputs/')
 const actionModels = require('./Job/actions/')
 
 class JobModel extends BaseModel {
@@ -42,6 +42,32 @@ class JobModel extends BaseModel {
 		return this._getProvider('job').isRunning(this)
 	}
 
+	getInputModels () {
+		var providerFactory = this._getProviderFactory()
+
+		return _.map(this.get('input'), (input, name) => {
+			var keys = _.keys(input)
+			var Model, config
+
+			for (var key of keys) {
+				Model = _.find(inputModels, (Model) => Model.key === key)
+
+				if (Model) {
+					config = input[key]
+					break
+				}
+			}
+
+			if ( ! Model) {
+				throw new Error(`Invalid input option(s) for "${name}": ${keys.join(', ')}.`)
+			}
+
+			var model = new Model(config, providerFactory)
+			model.setName(name)
+			return model
+		})
+	}
+
 	start () {
 		return this._getProvider('job').schedule(this)
 			.then(() => this)
@@ -54,47 +80,17 @@ class JobModel extends BaseModel {
 		var log = this._getProvider('log').child({ job_id: this.id, is_executing: true })
 		var result = new JobResultModel({ job_id: this.id }, this._getProviderFactory())
 
-		log.info(`Executing job ${this.id}.`)
-
-		var data = {}
-
 		// Input
-		return Promise.all(_.map(this.get('input'), (input, name) => new Promise((resolve, reject) => {
-			data[name] = null
+		return Promise.all(this.getInputModels().map((model) => (
+			model.getData().then((values) => [model.getName(), values])
+		)))
+			// Create key/value object from [[name, values], ...]
+			.then((data) => _.object(data))
 
-			// TODO(mauvm): Allow getting data without executing, to do ACL
-			if (input.user_config) {
-				var config = input.user_config
-
-				if (typeof config !== 'object' || ! config.where) {
-					throw new Error('Invalid input option for "user_config": Missing where object.')
-				}
-				if ( ! config.where.user_id) {
-					throw new Error('Invalid input option for "user_config": Missing where.user_id.')
-				}
-
-				this._getProvider('user').findByID(config.where.user_id)
-					.then((user) => this._getProvider('userConfig').findByUser(user, { id: config.where.id }))
-					.then((config) => data[name] = _.object(
-						_.keys(config),
-						_.map(config, (item) => item.getValue())
-					))
-					.then(resolve)
-					.catch(reject)
-			} else if (input.measurement_filter) {
-				MeasurementFilterModel.unserialize(input.measurement_filter, this._getProviderFactory())
-					.then((filter) => this._getProvider('measurement').findByFilter(filter))
-					.then((list) => data[name] = list.getItems())
-					.then(resolve)
-					.catch(reject)
-			} else {
-				reject(`Invalid input option(s) for "${name}": ${Object.keys(input).join(', ')}.`)
-			}
-		})))
 			// TODO(mauvm): Condition
 
 			// Transform
-			.then(() => {
+			.then((data) => {
 				var transform = this.get('transform')
 
 				if ( ! transform) return
@@ -113,10 +109,12 @@ class JobModel extends BaseModel {
 						throw new Error(`Invalid transform option for "${name}": ${err.message}`)
 					}
 				})
+
+				return data
 			})
 
 			// Actions
-			.then(() => Promise.all(
+			.then((data) => Promise.all(
 				_.map(this.get('actions'), (actions, name) => {
 					if (typeof actions !== 'object') {
 						throw new Error(`Invalid action "${name}": Not an object.`)
@@ -141,10 +139,10 @@ class JobModel extends BaseModel {
 						}
 					})
 				})
-			))
+			).then(() => data))
 
 			// Create job result
-			.then(() => result.setData(data))
+			.then((data) => result.setData(data))
 			.catch((err) => result.setError(err))
 			.then(() => this._getProvider('jobResult').create(result))
 
