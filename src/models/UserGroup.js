@@ -27,6 +27,7 @@ class UserGroupModel extends BaseModel {
 		return {
 			id: 'required|string|regex:/^[a-zA-Z0-9]+$/',
 			name: 'required|string',
+			config: 'object',
 			users: 'array',
 			created_at: 'date',
 			updated_at: 'date',
@@ -40,6 +41,14 @@ class UserGroupModel extends BaseModel {
 		}
 	}
 
+	loadConfig () {
+		return this._getProvider('userGroupConfig').findByGroup(this)
+			.then((config) => {
+				var key = 'config'
+				this.set(key, config)
+				return [key, config]
+			})
+	}
 	loadUsers () {
 		return this._getProvider('user').findByGroup(this)
 			.then((users) => {

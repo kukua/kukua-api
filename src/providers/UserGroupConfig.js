@@ -2,19 +2,19 @@ const path = require('path')
 const Promise = require('bluebird')
 const Datastore = require('nedb')
 const BaseProvider = require('./Base')
-const UserConfigModel = require('../models/UserConfig')
-const UserModel = require('../models/User')
+const UserGroupConfigModel = require('../models/UserGroupConfig')
+const UserGroupModel = require('../models/UserGroup')
 
 const invalidFieldName = 'Field names cannot begin with the $ character'
 
-class UserConfigProvider extends BaseProvider {
+class UserGroupConfigProvider extends BaseProvider {
 	constructor (providerFactory) {
 		super(providerFactory)
 
-		this._UserConfigModel = UserConfigModel
-		this._UserModel = UserModel
+		this._UserGroupConfigModel = UserGroupConfigModel
+		this._UserGroupModel = UserGroupModel
 
-		var filePath = path.resolve(process.env.USER_CONFIG_DB_PATH)
+		var filePath = path.resolve(process.env.USER_GROUP_CONFIG_DB_PATH)
 		this._createDB(filePath)
 	}
 
@@ -28,7 +28,7 @@ class UserConfigProvider extends BaseProvider {
 		db.ensureIndex({ fieldName: 'id' }, (err) => {
 			if (err) throw new Error(err)
 		})
-		db.ensureIndex({ fieldName: 'userID' }, (err) => {
+		db.ensureIndex({ fieldName: 'groupID' }, (err) => {
 			if (err) throw new Error(err)
 		})
 	}
@@ -36,13 +36,13 @@ class UserConfigProvider extends BaseProvider {
 	_createModel (item) {
 		var attr = {
 			id: item.id,
-			user_id: item.userID,
+			user_group_id: item.groupID,
 			value: (item.serialized ? JSON.parse(item.value) : item.value),
 			created_at: item.createdAt,
 			updated_at: item.updatedAt,
 		}
 
-		return new (this._UserConfigModel)(attr, this._getProviderFactory())
+		return new (this._UserGroupConfigModel)(attr, this._getProviderFactory())
 	}
 	_createConfig (items) {
 		var config = {}
@@ -50,13 +50,13 @@ class UserConfigProvider extends BaseProvider {
 		return config
 	}
 
-	findByUser (user, options = {}) {
+	findByGroup (group, options = {}) {
 		return new Promise((resolve, reject) => {
-			if ( ! (user instanceof this._UserModel)) {
-				return reject('Invalid user model.')
+			if ( ! (group instanceof this._UserGroupModel)) {
+				return reject('Invalid user group model.')
 			}
 
-			var where = { userID: user.id }
+			var where = { groupID: group.id }
 
 			if (typeof options.id === 'string' || Array.isArray(options.id)) {
 				where.id = options.id
@@ -68,10 +68,10 @@ class UserConfigProvider extends BaseProvider {
 			})
 		})
 	}
-	updateForUser (user, id, data) {
+	updateForGroup (group, id, data) {
 		return new Promise((resolve, reject) => {
-			if ( ! (user instanceof this._UserModel)) {
-				return reject('Invalid user model.')
+			if ( ! (group instanceof this._UserGroupModel)) {
+				return reject('Invalid user group model.')
 			}
 			if (typeof id !== 'string') {
 				return reject('Invalid config key.')
@@ -80,13 +80,13 @@ class UserConfigProvider extends BaseProvider {
 				return reject('Invalid data object.')
 			}
 
-			var userID = user.id
+			var groupID = group.id
 
 			this._db.update(
-				{ id, userID },
+				{ id, groupID },
 				{ $set: {
 					id,
-					userID,
+					groupID,
 					value: data.value,
 					serialized: data.serialized,
 				} },
@@ -96,7 +96,7 @@ class UserConfigProvider extends BaseProvider {
 						// Serialize and try again
 						data.value = JSON.stringify(data.value)
 						data.serialized = true
-						this.updateForUser(user, id, data).then(resolve, reject)
+						this.updateForGroup(group, id, data).then(resolve, reject)
 						return
 					}
 					if (err) return reject(err)
@@ -105,17 +105,17 @@ class UserConfigProvider extends BaseProvider {
 			)
 		})
 	}
-	removeByUserAndID (user, id) {
+	removeByGroupAndID (group, id) {
 		return new Promise((resolve, reject) => {
-			if ( ! (user instanceof this._UserModel)) {
-				return reject('Invalid user model.')
+			if ( ! (group instanceof this._UserGroupModel)) {
+				return reject('Invalid user group model.')
 			}
 			if (typeof id !== 'string') {
 				return reject('Invalid config key.')
 			}
 
 			this._db.remove(
-				{ id, userID: user.id },
+				{ id, groupID: group.id },
 				{},
 				(err /*, numRemoved*/) => {
 					if (err) return reject(err)
@@ -126,4 +126,4 @@ class UserConfigProvider extends BaseProvider {
 	}
 }
 
-module.exports = UserConfigProvider
+module.exports = UserGroupConfigProvider

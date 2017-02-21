@@ -2,6 +2,7 @@ const _ = require('underscore')
 const Promise = require('bluebird')
 const BaseController = require('./Base')
 const UserGroupModel = require('../models/UserGroup')
+const { BadRequestError } = require('../helpers/errors')
 
 class UserGroupController extends BaseController {
 	constructor (app, providerFactory) {
@@ -15,12 +16,6 @@ class UserGroupController extends BaseController {
 		app.delete('/userGroups/:id([a-zA-Z0-9]+)', auth.middleware, this._onRemove.bind(this))
 
 		app.put(
-			'/userGroups/:id([a-zA-Z0-9]+)/permissions/:rule([a-zA-Z0-9\\.]+)/:permission(inherit|allow|deny)',
-			auth.middleware,
-			this._onPermissionUpdate.bind(this)
-		)
-
-		app.put(
 			'/users/:userID(\\d+)/groups/:id([a-zA-Z0-9]+)',
 			auth.middleware,
 			this._onUserAdd.bind(this)
@@ -29,6 +24,23 @@ class UserGroupController extends BaseController {
 			'/users/:userID(\\d+)/groups/:id([a-zA-Z0-9]+)',
 			auth.middleware,
 			this._onUserRemove.bind(this)
+		)
+
+		app.put(
+			'/userGroups/:id([a-zA-Z0-9]+)/permissions/:rule([a-zA-Z0-9\\.]+)/:permission(inherit|allow|deny)',
+			auth.middleware,
+			this._onPermissionUpdate.bind(this)
+		)
+
+		app.put(
+			'/userGroups/:id([a-zA-Z0-9]+)/config/:configID([\\w\\.]+)',
+			auth.middleware,
+			this._onConfigUpdate.bind(this)
+		)
+		app.delete(
+			'/userGroups/:id([a-zA-Z0-9]+)/config/:configID([\\w\\.]+)',
+			auth.middleware,
+			this._onConfigRemove.bind(this)
 		)
 	}
 
@@ -74,16 +86,6 @@ class UserGroupController extends BaseController {
 			.catch((err) => res.error(err))
 	}
 
-	_onPermissionUpdate (req, res) {
-		var accessControl = this._getProvider('accessControl')
-
-		accessControl.can(req.session.user, 'acl.update.userGroup.' + req.params.id)
-			.then(() => this._getProvider('userGroup').findByID(req.params.id))
-			.then((group) => accessControl.setPermission(group, req.params.rule, req.params.permission))
-			.then(() => res.ok())
-			.catch((err) => res.error(err))
-	}
-
 	_onUserAdd (req, res) {
 		var provider = this._getProvider('userGroup')
 
@@ -107,6 +109,35 @@ class UserGroupController extends BaseController {
 				.then((group) => this._canUpdate(req.session.user, group)),
 		])
 			.then(([ user, group ]) => provider.removeUserFromGroup(user, group))
+			.then(() => res.ok())
+			.catch((err) => res.error(err))
+	}
+
+	_onPermissionUpdate (req, res) {
+		var accessControl = this._getProvider('accessControl')
+
+		accessControl.can(req.session.user, 'acl.update.userGroup.' + req.params.id)
+			.then(() => this._getProvider('userGroup').findByID(req.params.id))
+			.then((group) => accessControl.setPermission(group, req.params.rule, req.params.permission))
+			.then(() => res.ok())
+			.catch((err) => res.error(err))
+	}
+
+	_onConfigUpdate (req, res) {
+		var { value } = req.body
+		if (value === undefined) throw new BadRequestError('No value provided.')
+		var data = { value }
+
+		this._getProvider('userGroup').findByID(req.params.id)
+			.then((group) => this._canUpdate(req.session.user, group))
+			.then((group) => this._getProvider('userGroupConfig').updateForGroup(group, req.params.configID, data))
+			.then(() => res.ok())
+			.catch((err) => res.error(err))
+	}
+	_onConfigRemove (req, res) {
+		this._getProvider('userGroup').findByID(req.params.id)
+			.then((group) => this._canUpdate(req.session.user, group))
+			.then((group) => this._getProvider('userGroupConfig').removeByGroupAndID(group, req.params.configID))
 			.then(() => res.ok())
 			.catch((err) => res.error(err))
 	}
