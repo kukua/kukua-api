@@ -28,7 +28,7 @@ GET /deviceGroups?includes=devices
 
 GET /measurements?devices=abcdef0123456789&deviceGroups=Tanzania&fields=timestamp,temp:avg&from=2016-12-01&to=2016-12-31&limit=100&order=-temp:avg
 
-GET /users/2?includes=config,groups
+GET /users/2?includes=config,groups.config
 PUT /users/2/config/test {"value":{"a":1,"b":2}}
 DELETE /users/2/config/test
 GET /users/2/permissions/user.read.10 => 200/401

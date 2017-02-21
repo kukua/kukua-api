@@ -38,30 +38,47 @@ class BaseController {
 		var user = req.session.user
 
 		return Promise.all(req.query.includes.split(',').map((relation) => {
-			var fn = 'load' + classify(relation)
+			var parts = relation.split('.')
+			var promise = Promise.resolve(model)
 
-			if (typeof model[fn] !== 'function') {
-				throw new Error('Invalid relation: ' + relation)
+			for (let i = 0; i < parts.length; i += 1) {
+				promise = promise.then((modelOrModels) => {
+					var fn = 'load' + classify(parts[i])
+					var models = (modelOrModels instanceof BaseModel ? [modelOrModels] : modelOrModels)
+
+					return Promise.all(models.map((model) => {
+						if (typeof model[fn] !== 'function') {
+							console.log(parts, i)
+							throw new Error('Invalid relation: ' + parts.slice(0, i + 1).join('.'))
+						}
+
+						return model[fn]()
+							.then(([key, modelOrModels]) => {
+								// Check read permissions
+								if (modelOrModels instanceof BaseModel) {
+									return this._canRead(user, modelOrModels)
+										// Remove if cannot be read
+										.catch(UnauthorizedError, () => model.set(key, undefined))
+										.then(() => model.get(key))
+								} else if (Array.isArray(modelOrModels)) {
+									return Promise.all(modelOrModels.map((model) => {
+										return this._canRead(user, model)
+											.catch(UnauthorizedError, () => null)
+									}))
+										// Replace with ones that can be read
+										.then((models) => model.set(key, _.compact(models)))
+										.then(() => model.get(key))
+								} else {
+									// No way of checking permissions, so skip (e.g. UserConfig object)
+									return Promise.resolve(undefined)
+								}
+							})
+					}))
+						.then((subModels) => _.compact(_.flatten(subModels)))
+				})
 			}
 
-			return model[fn]().then(([key, modelOrModels]) => {
-				// Check read permissions
-				if (modelOrModels instanceof BaseModel) {
-					return this._canRead(user, modelOrModels)
-						// Remove if cannot be read
-						.catch(UnauthorizedError, () => model.set(key, undefined))
-				} else if (Array.isArray(modelOrModels)) {
-					return Promise.all(modelOrModels.map((model) => {
-						return this._canRead(user, model)
-							.catch(UnauthorizedError, () => null)
-					}))
-						// Replace with ones that can be read
-						.then((models) => model.set(key, _.compact(models)))
-				} else {
-					// No way of checking permissions, so skip (e.g. UserConfig object)
-					return Promise.resolve()
-				}
-			})
+			return promise
 		})).then(() => model)
 	}
 
