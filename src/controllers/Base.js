@@ -48,7 +48,6 @@ class BaseController {
 
 					return Promise.all(models.map((model) => {
 						if (typeof model[fn] !== 'function') {
-							console.log(parts, i)
 							throw new Error('Invalid relation: ' + parts.slice(0, i + 1).join('.'))
 						}
 
