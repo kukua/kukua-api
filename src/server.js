@@ -17,6 +17,10 @@ if (process.env.NODE_ENV !== 'production') {
 
 providers('accessControl') // Preload
 
+// Enable/disable caching
+var useCache = process.env.USE_CACHE
+providers('cache').setEnabled(useCache === undefined || !! parseInt(useCache))
+
 const { NotFoundError, InternalServerError } = require('./helpers/errors')
 
 const UserController = require('./controllers/User')

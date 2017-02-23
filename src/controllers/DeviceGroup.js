@@ -8,8 +8,9 @@ class DeviceGroupController extends BaseController {
 		super(app, providerFactory)
 
 		var auth = this._getProvider('auth')
+		var cache = this._getProvider('cache')
 
-		app.get('/deviceGroups', auth.middleware, this._onIndex.bind(this))
+		app.get('/deviceGroups', auth.middleware, cache.middleware, this._onIndex.bind(this))
 		app.get('/deviceGroups/:id([a-zA-Z0-9]+)', auth.middleware, this._onShow.bind(this))
 		app.put('/deviceGroups/:id([a-zA-Z0-9]+)', auth.middleware, this._onUpdate.bind(this))
 		app.delete('/deviceGroups/:id([a-zA-Z0-9]+)', auth.middleware, this._onRemove.bind(this))
@@ -38,7 +39,7 @@ class DeviceGroupController extends BaseController {
 			))
 			.then((groups) => _.compact(groups))
 			.then((groups) => this._addIncludes(req, groups))
-			.then((groups) => res.json(groups))
+			.then((groups) => this._getProvider('cache').respond(req, res, groups))
 			.catch((err) => res.error(err))
 	}
 	_onShow (req, res) {
