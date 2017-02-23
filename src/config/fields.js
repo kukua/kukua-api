@@ -5,21 +5,27 @@ module.exports = {
 	temp:      (filter, aggregator, alias) => standard(filter, aggregator, 'temp', alias, 300),
 	humid:     (filter, aggregator, alias) => standard(filter, aggregator, 'humid', alias, 100),
 	rain:      (filter, aggregator, alias) => standard(filter, aggregator, 'rain', alias, 300),
-	windDir:   (filter, aggregator, alias) => `ROUND(,
-		(DEGREES(ATAN2(,
-			${aggregator}(CASE WHEN windSpeed > 1000 OR windDir < 0 OR windDir > 360 THEN NULL ELSE (windSpeed * SIN(RADIANS(windDir))) END),,
-			${aggregator}(CASE WHEN windSpeed > 1000 OR windDir < 0 OR windDir > 360 THEN NULL ELSE (windSpeed * COS(RADIANS(windDir))) END),
-		)) + 360) % 360,,
-		0,
-	) AS "${alias}"`,
+	windDir:   (filter, aggregator, alias) => ({
+		sql: `ROUND(
+			(DEGREES(ATAN2(
+				${aggregator}(CASE WHEN windSpeed > 1000 OR windDir < 0 OR windDir > 360 THEN NULL ELSE (windSpeed * SIN(RADIANS(windDir))) END),
+				${aggregator}(CASE WHEN windSpeed > 1000 OR windDir < 0 OR windDir > 360 THEN NULL ELSE (windSpeed * COS(RADIANS(windDir))) END)
+			)) + 360) % 360,
+			0
+		) AS "${alias}"`,
+		columns: ['windSpeed', 'windDir'],
+	}),
 	windSpeed: (filter, aggregator, alias) => standard(filter, aggregator, 'windSpeed', alias, 300),
-	gustDir:   (filter, aggregator, alias) => `ROUND(,
-		(DEGREES(ATAN2(,
-			${aggregator}(CASE WHEN gustSpeed > 1000 OR gustDir < 0 OR gustDir > 360 THEN NULL ELSE (gustSpeed * SIN(RADIANS(gustDir))) END),,
-			${aggregator}(CASE WHEN gustSpeed > 1000 OR gustDir < 0 OR gustDir > 360 THEN NULL ELSE (gustSpeed * COS(RADIANS(gustDir))) END),
-		)) + 360) % 360,,
-		0,
-	) AS "${alias}"`,
+	gustDir:   (filter, aggregator, alias) => ({
+		sql: `ROUND(,
+			(DEGREES(ATAN2(
+				${aggregator}(CASE WHEN gustSpeed > 1000 OR gustDir < 0 OR gustDir > 360 THEN NULL ELSE (gustSpeed * SIN(RADIANS(gustDir))) END),
+				${aggregator}(CASE WHEN gustSpeed > 1000 OR gustDir < 0 OR gustDir > 360 THEN NULL ELSE (gustSpeed * COS(RADIANS(gustDir))) END)
+			)) + 360) % 360,
+			0
+		) AS "${alias}"`,
+		columns: ['gustSpeed', 'gustDir'],
+	}),
 	gustSpeed:      (filter, aggregator, alias) => standard(filter, aggregator, 'gustSpeed', alias, 300),
 	bmpTemp:        (filter, aggregator, alias) => standard(filter, aggregator, 'bmpTemp', alias, 300),
 	pressure:       (filter, aggregator, alias) => standard(filter, aggregator, 'pressure', alias, 2000),

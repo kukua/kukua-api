@@ -55,8 +55,16 @@ class MeasurementProvider extends BaseProvider {
 							throw new Error(`Field "${name}" not supported by template.`)
 						}
 
-						columns.push(name)
-						selects.push(this._fields[name](filter, aggregator, column))
+						var field = this._fields[name](filter, aggregator, column)
+
+						if (typeof field === 'object') {
+							if (field.columns) columns.push(...field.columns)
+							else columns.push(name)
+							selects.push(field.sql)
+						} else {
+							columns.push(name)
+							selects.push(field)
+						}
 					})
 
 					columns = _.uniq(columns)
