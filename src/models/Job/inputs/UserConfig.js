@@ -14,17 +14,19 @@ class UserConfigInput extends BaseInput {
 		return this
 	}
 
-	getModels () {
+	getUser () {
 		var { where } = this.getConfig()
 
 		return this._getProvider('user').findByID(where.user_id)
-			.then((user) => [user])
+	}
+	getModels () {
+		return this.getUser().then((user) => [user])
 	}
 	getData () {
 		var { where: { id } } = this.getConfig()
 
-		return this.getModels()
-			.then(([ user ]) => this._getProvider('userConfig').findByUser(user, { id }))
+		return this.getUser()
+			.then((user) => this._getProvider('userConfig').findByUser(user, { id }))
 			.then((config) => _.object(
 				_.keys(config),
 				_.map(config, (item) => item.getValue())

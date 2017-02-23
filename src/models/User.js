@@ -14,7 +14,7 @@ class UserModel extends BaseModel {
 	loadGroups () {
 		return this._getProvider('userGroup').findByUser(this)
 			.then((groups) => {
-				var key = 'user_groups'
+				var key = 'groups'
 				this.set(key, groups)
 				return [key, groups]
 			})
