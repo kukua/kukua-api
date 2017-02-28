@@ -41,7 +41,14 @@ class MeasurementListModel extends BaseModel {
 		if (_.size(items) === 0) return []
 		if (isGrouped) return _.keys(items[0])
 
-		return _.keys(_.first(_.first(_.values(items))))
+		var keys = _.keys(items)
+		for (var id of keys) {
+			if (items[id].length > 0) {
+				return _.keys(_.first(items[id]))
+			}
+		}
+
+		return []
 	}
 	getValues () {
 		var isGrouped = this.getFilter().isGrouped()
