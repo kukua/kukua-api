@@ -45,9 +45,8 @@ class DeviceGroupProvider extends BaseProvider {
 	getRequestedIDs (req) {
 		// &device_groups=country1,country2,...
 		return _.chain((req.query.deviceGroups || req.query.groups || '').split(','))
-			.map((id) => id.toLowerCase())
 			// Also removes empty values, since ''.split(',') => ['']
-			.filter((id) => id.match(/^[\da-z\-]+$/))
+			.filter((id) => id.match(/^[a-zA-Z0-9]+$/))
 			.uniq()
 			.value()
 	}

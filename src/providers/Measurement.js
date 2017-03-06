@@ -21,9 +21,10 @@ class MeasurementProvider extends BaseProvider {
 			}
 
 			var deviceIDs = filter.getAllDeviceIDs()
+			var list = new (this._MeasurementListModel)({ filter }, this._getProviderFactory())
 
 			if (deviceIDs.length === 0) {
-				return resolve(this._createModel(filter))
+				return resolve(list)
 			}
 
 			this._getProvider('device').find({ id: deviceIDs })
@@ -100,7 +101,6 @@ class MeasurementProvider extends BaseProvider {
 						`.replace(/\t/g, ''),
 						{ type: sequelize.QueryTypes.SELECT }
 					)
-					var list = new (this._MeasurementListModel)({ filter }, this._getProviderFactory())
 
 					if (filter.isGrouped()) {
 						return query(deviceIDs)
