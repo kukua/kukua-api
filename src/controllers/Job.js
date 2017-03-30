@@ -1,5 +1,6 @@
 const _ = require('underscore')
 const Promise = require('bluebird')
+const moment = require('moment-timezone')
 const BaseController = require('./Base')
 const JobModel = require('../models/Job')
 
@@ -42,13 +43,21 @@ class JobController extends BaseController {
 			.catch((err) => res.error(err))
 	}
 	_onShowResults (req, res) {
-		var limit
+		var from, to, limit
+		if (req.query.from) from = moment.utc(req.query.from)
+		if (from && ! from.isValid()) from = null
+
+		if (req.query.to) to = moment.utc(req.query.to)
+		if (to && ! to.isValid()) to = null
+
 		if (req.query.limit) limit = parseInt(req.query.limit)
 		if (isNaN(limit)) limit = null
 
 		this._getProvider('job').findByID(req.params.id)
 			.then((job) => this._canRead(req.session.user, job))
-			.then((job) => this._getProvider('jobResult').findByJob(job, limit))
+			.then((job) => this._getProvider('jobResult').findByJob(job, {
+				from, to, limit,
+			}))
 			.then((results) => res.json(results))
 			.catch((err) => res.error(err))
 	}

@@ -2,6 +2,7 @@ const path = require('path')
 const Promise = require('bluebird')
 const Datastore = require('nedb')
 const deepcopy = require('deepcopy')
+const moment = require('moment-timezone')
 const BaseProvider = require('./Base')
 const JobResultModel = require('../models/JobResult')
 const JobModel = require('../models/Job')
@@ -48,18 +49,34 @@ class JobResultProvider extends BaseProvider {
 		return data
 	}
 
-	findByJob (job, limit = null) {
+	findByJob (job, options = {}) {
 		return new Promise((resolve, reject) => {
 			if ( ! (job instanceof this._JobModel)) {
 				return reject('Invalid job model.')
 			}
+			if (typeof options !== 'object') {
+				return reject('Invalid options.')
+			}
 
-			var statement = this._db
-				.find({ jobID: job.id })
-				.sort({ createdAt: -1 })
+			var where = {
+				jobID: job.id,
+			}
 
-			if (limit) {
-				statement = statement.limit(limit)
+			if (options.from || options.to) {
+				where.createdAt = {}
+
+				if (options.from instanceof moment) {
+					where.createdAt.$gte = options.from
+				}
+				if (options.to instanceof moment) {
+					where.createdAt.$lte = options.to
+				}
+			}
+
+			var statement = this._db.find(where).sort({ createdAt: -1 })
+
+			if (options.limit) {
+				statement = statement.limit(options.limit)
 			}
 
 			statement.exec((err, results) => {
