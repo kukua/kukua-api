@@ -32,6 +32,11 @@ class UserGroupController extends BaseController {
 			this._onPermissionUpdate.bind(this)
 		)
 
+		app.get(
+			'/userGroups/:id([a-zA-Z0-9]+)/config/:configID([\\w\\.]+)',
+			auth.middleware,
+			this._onConfigShow.bind(this)
+		)
 		app.put(
 			'/userGroups/:id([a-zA-Z0-9]+)/config/:configID([\\w\\.]+)',
 			auth.middleware,
@@ -123,6 +128,13 @@ class UserGroupController extends BaseController {
 			.catch((err) => res.error(err))
 	}
 
+	_onConfigShow (req, res) {
+		this._getProvider('userGroup').findByID(req.params.id)
+			.then((group) => this._canRead(req.session.user, group))
+			.then((group) => this._getProvider('userGroupConfig').findByGroupAndID(group, req.params.configID))
+			.then((config) => res.json(config))
+			.catch((err) => res.error(err))
+	}
 	_onConfigUpdate (req, res) {
 		var { value } = req.body
 		if (value === undefined) throw new BadRequestError('No value provided.')

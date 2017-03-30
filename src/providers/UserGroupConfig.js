@@ -4,6 +4,7 @@ const Datastore = require('nedb')
 const BaseProvider = require('./Base')
 const UserGroupConfigModel = require('../models/UserGroupConfig')
 const UserGroupModel = require('../models/UserGroup')
+const { NotFoundError } = require('../helpers/errors')
 
 const invalidFieldName = 'Field names cannot begin with the $ character'
 
@@ -67,6 +68,13 @@ class UserGroupConfigProvider extends BaseProvider {
 				resolve(this._createConfig(items.map((item) => this._createModel(item))))
 			})
 		})
+	}
+	findByGroupAndID (group, id) {
+		return this.findByGroup(group, { id })
+			.then((config) => {
+				if ( ! config[id]) throw new NotFoundError()
+				return config[id]
+			})
 	}
 	updateForGroup (group, id, data) {
 		return new Promise((resolve, reject) => {
